@@ -175,7 +175,7 @@ scout-off-frontend/
 └── package.json                  # ✅
 ```
 
-> ✅ Scaffolded · 🔲 Folder created, implementation pending
+> ✅ Implemented · 🔲 Folder created, implementation pending
 
 ## Smart Contract Functions
 
@@ -410,7 +410,7 @@ Test coverage targets:
 - ✅ Pause / unpause circuit breaker
 - ✅ Edge cases: unauthorized validators, duplicate milestones, invalid fees
 
-## Scaffold Status
+## Implementation Status
 
 | Area | Status | Notes |
 |------|--------|-------|
