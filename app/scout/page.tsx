@@ -4,10 +4,11 @@ import { useWallet } from "@/hooks/useWallet";
 import { useScout } from "@/hooks/useScout";
 import PlayerCard from "@/components/PlayerCard";
 import type { PlayerFilter, ProgressLevel } from "@/types";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const POSITIONS = ["GK", "CB", "LB", "RB", "CM", "CAM", "LW", "RW", "ST"];
 
-export default function ScoutDashboard() {
+function ScoutDashboardContent() {
   const { publicKey } = useWallet();
   const [filter, setFilter] = useState<PlayerFilter>({});
   const { players, loading, search } = useScout();
@@ -76,5 +77,13 @@ export default function ScoutDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ScoutDashboard() {
+  return (
+    <ErrorBoundary>
+      <ScoutDashboardContent />
+    </ErrorBoundary>
   );
 }
