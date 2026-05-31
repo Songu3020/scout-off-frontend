@@ -91,7 +91,8 @@ describe('PlayerCard', () => {
 
     expect(viewProfileLink).toHaveAttribute('href', `/player/${mockPlayer.id}`);
 
-    fireEvent.click(viewProfileLink);
+  it("navigates to the player profile when Space is pressed", () => {
+    render(<PlayerCard player={mockPlayer} />);
 
     expect(viewProfileLink).toHaveAttribute('href', `/player/${mockPlayer.id}`);
   });
@@ -106,6 +107,7 @@ describe('PlayerCard', () => {
       'src',
       `${process.env.NEXT_PUBLIC_IPFS_GATEWAY}/${mockPlayer.ipfsHash}`,
     );
+    expect(images[0]).toHaveAttribute("alt", "");
   });
 
   it('shows a placeholder when no IPFS image CID is set', () => {

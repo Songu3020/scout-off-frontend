@@ -15,6 +15,67 @@ import {
 import { TransactionBuilder } from '@stellar/stellar-sdk';
 import { rpc, NETWORK } from '@/lib/stellar';
 
+// ── Wallet provider types ─────────────────────────────────────────────────────
+
+export type WalletProvider = "freighter" | "lobstr";
+
+interface WalletAdapter {
+  isInstalled: () => Promise<boolean>;
+  getPublicKey: () => Promise<string>;
+  signTransaction: (xdr: string) => Promise<string>;
+}
+
+const ADAPTERS: Record<WalletProvider, WalletAdapter> = {
+  freighter: {
+    isInstalled: async () => {
+      const result = await freighterIsConnected();
+      // freighter-api v2 returns { isConnected: boolean }
+      return typeof result === "object" && result !== null
+        ? (result as { isConnected: boolean }).isConnected
+        : Boolean(result);
+    },
+    getPublicKey: async () => {
+      const result = await freighterGetPublicKey();
+      if (typeof result === "object" && result !== null && "publicKey" in result) {
+        return (result as { publicKey: string }).publicKey;
+      }
+      return result as unknown as string;
+    },
+    signTransaction: async (xdr: string) => {
+      const result = await freighterSignTransaction(xdr, {
+        networkPassphrase: NETWORK,
+      });
+      if (typeof result === "object" && result !== null && "signedTxXdr" in result) {
+        return (result as { signedTxXdr: string }).signedTxXdr;
+      }
+      return result as unknown as string;
+    },
+  },
+  lobstr: {
+    isInstalled: async () => {
+      try {
+        return await lobstrIsConnected();
+      } catch {
+        return false;
+      }
+    },
+    getPublicKey: async () => {
+      const pk = await lobstrGetPublicKey();
+      if (!pk) throw new Error("LOBSTR returned empty public key");
+      return pk;
+    },
+    signTransaction: async (xdr: string) => {
+      const signed = await lobstrSignTransaction(xdr);
+      if (!signed) throw new Error("LOBSTR signing failed");
+      return signed;
+    },
+  },
+};
+
+const PROVIDER_STORAGE_KEY = "scoutoff_wallet_provider";
+
+// ── Context value ─────────────────────────────────────────────────────────────
+
 interface WalletContextValue {
   publicKey: string | null;
   isAuthenticated: boolean;
