@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import { ToastProvider } from '@/components/ui/Toast';
 import { WalletProvider } from '@/context/WalletContext';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://scoutoff.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://scoutoff.app';
 
 export const metadata: Metadata = {
   title: 'ScoutOff — Decentralized Football Scouting',
@@ -43,6 +43,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/icons/icon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/icons/icon-16x16.png"
+        />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f172a" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -57,7 +69,9 @@ export default function RootLayout({
         <WalletProvider>
           <ToastProvider>
             <Navbar />
-            <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+            <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">
+              {children}
+            </main>
           </ToastProvider>
         </WalletProvider>
       </body>
