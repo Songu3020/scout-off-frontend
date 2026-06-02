@@ -10,7 +10,9 @@
     "test": "jest --passWithNoTests",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,mdx}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md,mdx}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postbuild": "next-sitemap",
+    "generate:icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@albedo-link/intent": "^0.13.0",
@@ -46,7 +48,8 @@
     "jest-environment-jsdom": "29.7.0",
     "lint-staged": "^14.0.0",
     "prettier": "^3.8.1",
-    "ts-jest": "29.1.0"
+    "lint-staged": "^14.0.0",
+    "next-sitemap": "^5.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -57,4 +60,3 @@
       "prettier --write"
     ]
   }
-}
