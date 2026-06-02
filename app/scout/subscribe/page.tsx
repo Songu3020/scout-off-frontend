@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { useSubscription } from '@/hooks/useSubscription';
+import useIsPaused from '@/hooks/useIsPaused';
 import type { SubscriptionTier } from '@/types';
 
 const TIERS: Array<{
@@ -85,6 +86,10 @@ function SubscribeContent() {
   }, [subscription, isExpired, loading]);
 
   async function handleSubscribe(tier: SubscriptionTier) {
+    if (useIsPaused()) {
+      setSuccessMessage('Transactions are currently disabled');
+      return;
+    }
     if (loading) {
       return;
     }
@@ -96,13 +101,13 @@ function SubscribeContent() {
       const result = await subscribe(tier);
       const hash = (result as any)?.hash ?? null;
       setTxHash(hash);
-      setTxStatus("success");
+      setTxStatus('success');
       setSuccessMessage(`Subscribed to ${tier.toUpperCase()} successfully.`);
       redirectTimer.current = window.setTimeout(() => {
         router.push('/scout');
       }, 1000);
     } catch (err) {
-      setTxStatus("error");
+      setTxStatus('error');
       console.error(err);
     } finally {
       setSelectedTier(null);
@@ -145,7 +150,7 @@ function SubscribeContent() {
           onHide={() => setTxStatus(null)}
         />
 
-        {error && txStatus !== "error" && (
+        {error && txStatus !== 'error' && (
           <div
             role="status"
             aria-live="assertive"

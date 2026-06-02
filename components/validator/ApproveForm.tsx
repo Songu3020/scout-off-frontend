@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { sanitize } from '@/lib/sanitize';
 import { useWallet } from '@/hooks/useWallet';
+import useIsPaused from '@/hooks/useIsPaused';
 import { useValidator } from '@/hooks/useValidator';
 import { getPlayer } from '@/lib/contract';
 import { PROGRESS_LABELS } from '@/types';
@@ -64,8 +65,13 @@ export default function ApproveForm({ onSuccess }: ApproveFormProps) {
     if (!publicKey || !isValidator) return;
     if (evidenceUrl && !validateUrl(evidenceUrl)) return;
 
+    if (useIsPaused()) {
+      setSubmitError('Transactions are currently disabled');
+      return;
+    }
+
     setSubmitting(true);
-    setTxStatus("pending");
+    setTxStatus('pending');
     setTxHash(null);
     setSubmitError(null);
     try {
@@ -74,11 +80,11 @@ export default function ApproveForm({ onSuccess }: ApproveFormProps) {
       const result = await signAndSubmit(xdr);
       const hash = (result as any)?.hash ?? null;
       setTxHash(hash);
-      setTxStatus("success");
+      setTxStatus('success');
       onSuccess();
     } catch (e: any) {
-      setTxStatus("error");
-      setSubmitError(e?.message ?? "Approval failed");
+      setTxStatus('error');
+      setSubmitError(e?.message ?? 'Approval failed');
     } finally {
       setSubmitting(false);
     }
