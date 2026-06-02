@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { sanitize } from '@/lib/sanitize';
 import { useWallet } from '@/hooks/useWallet';
+import useIsPaused from '@/hooks/useIsPaused';
 import { buildRegisterPlayer } from '@/lib/contract';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -94,6 +95,11 @@ export default function PlayerProfileForm({
     if (!validate()) return;
     if (!publicKey) {
       setErrors({ form: 'Wallet not connected' });
+      return;
+    }
+
+    if (useIsPaused()) {
+      setErrors({ form: 'Transactions are currently disabled' });
       return;
     }
 

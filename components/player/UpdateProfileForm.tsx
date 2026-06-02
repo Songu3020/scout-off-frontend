@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Player } from '@/types';
 import { useWallet } from '@/hooks/useWallet';
+import useIsPaused from '@/hooks/useIsPaused';
 import { ipfsUrl } from '@/lib/ipfs';
 import { updateProfile } from '@/lib/contract';
 import { useToast } from '@/components/ui/Toast';
@@ -33,6 +34,13 @@ export default function UpdateProfileForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (useIsPaused()) {
+      show({
+        message: 'Transactions are currently disabled',
+        variant: 'error',
+      });
+      return;
+    }
     if (!newCid || isSubmitting) return;
 
     setIsSubmitting(true);

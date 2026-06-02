@@ -3,6 +3,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import { ToastProvider } from '@/components/ui/Toast';
 import { WalletProvider } from '@/context/WalletContext';
+import ContractPausedBanner from '@/components/ContractPausedBanner';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
@@ -56,7 +57,8 @@ export default async function RootLayout({
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-brand-green focus:text-black focus:px-6 focus:py-3 focus:rounded-lg focus:font-semibold"
-        >
+            <Navbar />
+            <ContractPausedBanner />
           Skip to main content
         </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
