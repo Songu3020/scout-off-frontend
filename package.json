@@ -10,7 +10,8 @@
     "test": "jest --passWithNoTests",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,mdx}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md,mdx}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "generate:icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@albedo-link/intent": "^0.13.0",

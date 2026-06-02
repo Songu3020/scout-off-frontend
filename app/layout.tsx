@@ -3,8 +3,8 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import { ToastProvider } from '@/components/ui/Toast';
 import { WalletProvider } from '@/context/WalletContext';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://scoutoff.app';
 
 export const metadata: Metadata = {
   title: 'ScoutOff — Decentralized Football Scouting',
@@ -48,6 +48,18 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/icons/icon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/icons/icon-16x16.png"
+        />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f172a" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -59,16 +71,14 @@ export default async function RootLayout({
         >
           Skip to main content
         </a>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <WalletProvider>
-            <ToastProvider>
-              <Navbar />
-              <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">
-                {children}
-              </main>
-            </ToastProvider>
-          </WalletProvider>
-        </NextIntlClientProvider>
+        <WalletProvider>
+          <ToastProvider>
+            <Navbar />
+            <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">
+              {children}
+            </main>
+          </ToastProvider>
+        </WalletProvider>
       </body>
     </html>
   );
