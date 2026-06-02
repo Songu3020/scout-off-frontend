@@ -61,18 +61,21 @@ export async function ipfsUrl(
   fallbacks: string[] = DEFAULT_IPFS_FALLBACKS,
 ): Promise<string> {
   const gateways = [PRIMARY_GATEWAY, ...fallbacks];
-  
+
   for (let i = 0; i < gateways.length; i++) {
     const gateway = gateways[i];
     const url = `${gateway}/${cid}`;
-    
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
+
     try {
       const response = await fetch(url, {
         method: 'HEAD',
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         if (i > 0) {
           console.warn(
@@ -80,23 +83,17 @@ export async function ipfsUrl(
           );
         }
         return url;
-      } else if (i < gateways.length - 1) {
-        console.warn(`Primary gateway failed (${response.status}), falling back to ${gateways[i + 1]}`);
       }
 
       // 4xx / 5xx — try next gateway
-      if (i > 0) {
-        console.warn(
-          `[ipfs] Gateway ${gateway} returned ${response.status}. Trying next fallback…`,
-        );
-      }
+      console.warn(
+        `[ipfs] Gateway ${gateway} returned ${response.status}. Trying next fallback…`,
+      );
     } catch {
       clearTimeout(timeoutId);
-      if (i > 0) {
-        console.warn(
-          `[ipfs] Gateway ${gateway} failed (timeout or network error). Trying next fallback…`,
-        );
-      }
+      console.warn(
+        `[ipfs] Gateway ${gateway} failed (timeout or network error). Trying next fallback…`,
+      );
     }
   }
 

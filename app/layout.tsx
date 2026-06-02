@@ -3,8 +3,8 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import { ToastProvider } from '@/components/ui/Toast';
 import { WalletProvider } from '@/context/WalletContext';
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://scoutoff.app';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
 export const metadata: Metadata = {
   title: 'ScoutOff — Decentralized Football Scouting',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://scoutoff.app/og-image.png',
+        url: 'https://scoutoff.app/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'ScoutOff — Decentralized Football Scouting on Stellar',
@@ -31,17 +31,22 @@ export const metadata: Metadata = {
     title: 'ScoutOff — Decentralized Football Scouting',
     description:
       'Tamper-proof player profiles, verifiable milestones, and direct scout-to-player connections — powered by Stellar Soroban smart contracts.',
-    images: ['https://scoutoff.app/og-image.png'],
+    images: ['https://scoutoff.app/og-image.svg'],
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params?: { locale?: string };
 }) {
+  const locale = params?.locale ?? 'en';
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <link
           rel="icon"
@@ -66,14 +71,16 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <WalletProvider>
-          <ToastProvider>
-            <Navbar />
-            <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">
-              {children}
-            </main>
-          </ToastProvider>
-        </WalletProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <WalletProvider>
+            <ToastProvider>
+              <Navbar />
+              <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">
+                {children}
+              </main>
+            </ToastProvider>
+          </WalletProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

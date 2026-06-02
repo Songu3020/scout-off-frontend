@@ -1,33 +1,31 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { sanitize } from '@/lib/sanitize';
 import { useWallet } from '@/hooks/useWallet';
 import { buildRegisterPlayer } from '@/lib/contract';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import VideoUpload from '@/components/ui/VideoUpload';
+import { AFRICAN_REGIONS } from '@/lib/regions';
 import type { PlayerVitals } from '@/types';
+import type { TxStatus } from '@/components/ui/TransactionStatus';
 
 interface PlayerProfileFormProps {
   onSuccess: (playerId: string) => void;
 }
 
-const POSITIONS = [
-  'Goalkeeper',
-  'Defender',
-  'Midfielder',
-  'Forward',
-  'Winger',
-  'Striker',
-];
-
-const REGIONS = [
-  'Europe',
-  'South America',
-  'North America',
-  'Africa',
-  'Asia',
-  'Oceania',
+/** Football position options with short code and label. */
+const FOOTBALL_POSITIONS: { value: string; label: string }[] = [
+  { value: 'GK', label: 'Goalkeeper' },
+  { value: 'CB', label: 'Centre-Back' },
+  { value: 'LB', label: 'Left-Back' },
+  { value: 'RB', label: 'Right-Back' },
+  { value: 'CM', label: 'Central Midfielder' },
+  { value: 'CAM', label: 'Attacking Midfielder' },
+  { value: 'LW', label: 'Left Winger' },
+  { value: 'RW', label: 'Right Winger' },
+  { value: 'ST', label: 'Striker' },
 ];
 
 export default function PlayerProfileForm({
@@ -88,6 +86,11 @@ export default function PlayerProfileForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    // Sanitize free-text fields (player bio) before any submission
+    const sanitizedBio = sanitize(formData.bio);
+    // Update local state synchronously so subsequent flows see sanitized value
+    setFormData((prev: typeof formData) => ({ ...prev, bio: sanitizedBio }));
+
     if (!validate()) return;
     if (!publicKey) {
       setErrors({ form: 'Wallet not connected' });
@@ -96,7 +99,7 @@ export default function PlayerProfileForm({
 
     setIsLoading(true);
     setErrors({});
-    setTxStatus("pending");
+    setTxStatus('pending');
     setTxHash(null);
 
     try {
@@ -117,12 +120,12 @@ export default function PlayerProfileForm({
 
       const hash = (result as any)?.hash ?? null;
       setTxHash(hash);
-      setTxStatus("success");
+      setTxStatus('success');
 
       const playerId = (result as any)?.id || publicKey;
       onSuccess(playerId);
     } catch (error) {
-      setTxStatus("error");
+      setTxStatus('error');
       setErrors({
         form: error instanceof Error ? error.message : 'Registration failed',
       });
@@ -209,9 +212,9 @@ export default function PlayerProfileForm({
         error={errors.region}
       >
         <option value="">Select region</option>
-        {REGIONS.map((region) => (
-          <option key={region} value={region}>
-            {region}
+        {AFRICAN_REGIONS.map(({ label, value }) => (
+          <option key={value} value={value}>
+            {label}
           </option>
         ))}
       </Select>

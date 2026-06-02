@@ -1,43 +1,50 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback } from 'react';
+import useSWR from 'swr';
 import { getMilestoneHistory } from '@/lib/contract';
 import type { Milestone } from '@/types';
 
+/**
+ * Cache key scheme for useMilestoneHistory:
+ *   "milestones:{playerID}"
+ *
+ * Fully deterministic — same playerID always produces the same key.
+ * SWR deduplicates concurrent requests for the same key, preventing duplicate RPC calls.
+ */
+function milestonesKey(playerID: string | null): string | null {
+  return playerID ? `milestones:${playerID}` : null;
+}
+
 export function useMilestoneHistory(playerID: string | null) {
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const cache = useRef<Record<string, Milestone[]>>({});
-
-  const fetch = useCallback(async (id: string, bust = false) => {
-    if (!bust && cache.current[id]) {
-      setMilestones(cache.current[id]);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const result = (await getMilestoneHistory(id)) as Milestone[] | null;
-      const data = result ?? [];
-      cache.current[id] = data;
-      setMilestones(data);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (playerID) fetch(playerID);
-  }, [playerID, fetch]);
+  const {
+    data: milestones,
+    error,
+    isValidating,
+    mutate,
+  } = useSWR<Milestone[]>(
+    milestonesKey(playerID),
+    async () => {
+      const result = await getMilestoneHistory(playerID!);
+      return (result as Milestone[] | null) ?? [];
+    },
+    {
+      dedupingInterval: 60_000, // 60-second stale time — no duplicate RPC calls within this window
+      revalidateOnFocus: false,
+      errorRetryCount: 2,
+    },
+  );
 
   const refetch = useCallback(() => {
     if (playerID) {
-      delete cache.current[playerID];
-      fetch(playerID, true);
+      // Bump the cache key to force a fresh fetch
+      mutate(undefined, { revalidate: true });
     }
-  }, [playerID, fetch]);
+  }, [playerID, mutate]);
 
-  return { milestones, loading, error, refetch };
+  return {
+    milestones: milestones ?? [],
+    loading: isValidating && !milestones,
+    error: error?.message ?? null,
+    refetch,
+  };
 }

@@ -6,7 +6,6 @@ import { useScout } from '@/hooks/useScout';
 import { getPlayer } from '@/lib/contract';
 import PlayerCard from '@/components/PlayerCard';
 import PlayerCardSkeleton from '@/components/PlayerCardSkeleton';
-import ActivityFeed from '@/components/scout/ActivityFeed';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { AFRICAN_REGIONS } from '@/lib/regions';
 import type { Player, PlayerFilter, ProgressLevel } from '@/types';
@@ -24,7 +23,6 @@ function ScoutDashboardContent() {
   const searchParams = useSearchParams();
 
   const [filter, setFilter] = useState<PlayerFilter>({});
-
   const { players, loading, search } = useScout();
   const hasLoaded = useRef(false);
 
@@ -49,7 +47,6 @@ function ScoutDashboardContent() {
     params.set('page', String(p));
     router.replace(`?${params.toString()}`);
   }
-
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     hasLoaded.current = false;
@@ -100,9 +97,7 @@ function ScoutDashboardContent() {
     <div className="flex flex-col gap-8">
       <h1 className="text-3xl font-bold text-white">Scout Dashboard</h1>
 
-      <ActivityFeed />
-
-      {/* Wallet address search */
+      {/* Wallet address search */}
       <div className="bg-brand-card border border-gray-800 rounded-xl p-5 flex flex-col gap-3">
         <label
           className="text-sm font-medium text-gray-300"
