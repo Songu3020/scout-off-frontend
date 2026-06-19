@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import useIsPaused from '@/hooks/useIsPaused';
 
 const SESSION_KEY = 'scoutoff:contractPausedDismissed';
+const SUPPORT_URL = 'https://discord.gg/stellar';
 
 export default function ContractPausedBanner() {
   const paused = useIsPaused();
@@ -19,7 +20,6 @@ export default function ContractPausedBanner() {
   }, []);
 
   useEffect(() => {
-    // reset dismissed when contract becomes healthy again
     if (!paused) {
       try {
         sessionStorage.removeItem(SESSION_KEY);
@@ -28,8 +28,6 @@ export default function ContractPausedBanner() {
     }
   }, [paused]);
 
-  if (!paused || dismissed) return null;
-
   function handleDismiss() {
     try {
       sessionStorage.setItem(SESSION_KEY, '1');
@@ -37,22 +35,36 @@ export default function ContractPausedBanner() {
     setDismissed(true);
   }
 
+  const visible = paused && !dismissed;
+
   return (
-    <div className="w-full bg-yellow-300 text-black px-4 py-3 flex items-center justify-between gap-4 sticky top-0 z-40 border-b border-yellow-400">
-      <div>
-        <strong className="font-semibold">
-          ScoutOff is currently under maintenance.
-        </strong>
-        <div className="text-sm">Transactions are disabled.</div>
-      </div>
-      <div>
-        <button
-          onClick={handleDismiss}
-          className="bg-black text-yellow-300 px-3 py-1 rounded-md font-medium"
-        >
-          Dismiss
-        </button>
-      </div>
+    <div aria-live="polite" style={{ minHeight: visible ? undefined : 0 }}>
+      {visible && (
+        <div className="w-full bg-yellow-300 text-black px-4 py-3 flex items-center justify-between gap-4 sticky top-0 z-40 border-b border-yellow-400">
+          <div>
+            <strong className="font-semibold">
+              ScoutOff is currently under maintenance.
+            </strong>{' '}
+            <span className="text-sm">
+              Transactions are disabled.{' '}
+              <a
+                href={SUPPORT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline font-medium"
+              >
+                Get updates on Discord
+              </a>
+            </span>
+          </div>
+          <button
+            onClick={handleDismiss}
+            className="shrink-0 bg-black text-yellow-300 px-3 py-1 rounded-md font-medium"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
     </div>
   );
 }
