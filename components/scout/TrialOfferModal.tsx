@@ -118,9 +118,7 @@ export default function TrialOfferModal({
               status={txStatus}
               error={
                 error ||
-                (txStatus === 'error'
-                  ? 'Please fill in all fields'
-                  : undefined)
+                (txStatus === 'error' ? 'Please fill in all fields' : undefined)
               }
               onHide={() => {
                 if (txStatus === 'success') {

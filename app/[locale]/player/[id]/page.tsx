@@ -111,10 +111,14 @@ export default function PlayerProfile() {
                 Advance Player to Elite Tier
               </h2>
               <p className="text-sm text-gray-400">
-                Log a trial offer to advance this player to Level 3 (Elite Tier).
+                Log a trial offer to advance this player to Level 3 (Elite
+                Tier).
               </p>
             </div>
-            <TrialOfferModal playerId={id} onSuccess={handleTrialOfferSuccess} />
+            <TrialOfferModal
+              playerId={id}
+              onSuccess={handleTrialOfferSuccess}
+            />
           </div>
         </div>
       )}

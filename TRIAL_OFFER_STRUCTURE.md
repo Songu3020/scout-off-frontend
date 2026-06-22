@@ -3,6 +3,7 @@
 ## Overview
 
 Trial offers advance players to Level 3 (Elite Tier) when scouts call the `log_trial_offer` contract function. This document specifies:
+
 1. The data structure for trial offer details
 2. How to serialize and encode the data for the contract
 3. Patterns for submitting to the contract
@@ -71,11 +72,11 @@ log_trial_offer(scout, player_id, details)
 
 ### Parameters
 
-| Parameter  | Type    | Description                                                   |
-| ---------- | ------- | ------------------------------------------------------------- |
-| `scout`    | address | Scout's Stellar public key (source + auth signer)             |
-| `player_id` | string | The unique identifier of the player                           |
-| `details`  | string  | Serialized trial offer details (see **Serialization** below) |
+| Parameter   | Type    | Description                                                  |
+| ----------- | ------- | ------------------------------------------------------------ |
+| `scout`     | address | Scout's Stellar public key (source + auth signer)            |
+| `player_id` | string  | The unique identifier of the player                          |
+| `details`   | string  | Serialized trial offer details (see **Serialization** below) |
 
 ### Return Value
 
@@ -107,18 +108,18 @@ import { nativeToScVal } from '@stellar/stellar-sdk';
 import { buildTx } from '@/lib/contract';
 
 export async function buildLogTrialOffer(
-  scout: string,           // Stellar address
-  playerId: string,        // Player ID
-  details: string          // Serialized trial offer details
+  scout: string, // Stellar address
+  playerId: string, // Player ID
+  details: string, // Serialized trial offer details
 ) {
   return buildTx(
     'log_trial_offer',
     [
-      nativeToScVal(scout, { type: 'address' }),     // Convert address
-      nativeToScVal(playerId, { type: 'string' }),   // Convert to string
-      nativeToScVal(details, { type: 'string' }),    // Convert to string
+      nativeToScVal(scout, { type: 'address' }), // Convert address
+      nativeToScVal(playerId, { type: 'string' }), // Convert to string
+      nativeToScVal(details, { type: 'string' }), // Convert to string
     ],
-    scout  // Source account wallet
+    scout, // Source account wallet
   );
 }
 ```
@@ -128,13 +129,15 @@ export async function buildLogTrialOffer(
 The `details` parameter is a **single string** that can be structured as:
 
 #### Option 1: JSON Object (Recommended)
+
 Serialize the offer fields as a JSON string:
 
 ```typescript
 const trialOfferDetails = {
-  location: "Lagos, Nigeria",
-  startDate: "2025-03-15",
-  description: "Trial for striker position at XYZ Academy. Focus on positioning and finishing."
+  location: 'Lagos, Nigeria',
+  startDate: '2025-03-15',
+  description:
+    'Trial for striker position at XYZ Academy. Focus on positioning and finishing.',
 };
 
 const detailsString = JSON.stringify(trialOfferDetails);
@@ -142,22 +145,27 @@ const detailsString = JSON.stringify(trialOfferDetails);
 ```
 
 Then pass to contract:
+
 ```typescript
-nativeToScVal(detailsString, { type: 'string' })
+nativeToScVal(detailsString, { type: 'string' });
 ```
 
 #### Option 2: Plain Text (Pipe-Delimited)
+
 For simpler cases, use a structured text format:
 
 ```typescript
-const detailsString = "location: Lagos, Nigeria | startDate: 2025-03-15 | Striker position, focus on finishing";
+const detailsString =
+  'location: Lagos, Nigeria | startDate: 2025-03-15 | Striker position, focus on finishing';
 ```
 
 #### Option 3: Plain Narrative
+
 Free-form description if structure is not critical:
 
 ```typescript
-const detailsString = "Trial offer for striker position at XYZ Academy in Lagos. Starting 2025-03-15. Focus on positioning and finishing.";
+const detailsString =
+  'Trial offer for striker position at XYZ Academy in Lagos. Starting 2025-03-15. Focus on positioning and finishing.';
 ```
 
 **Recommendation**: Use **Option 1 (JSON)** for consistency with other structured data in the platform and to support future parsing.
@@ -169,6 +177,7 @@ const detailsString = "Trial offer for striker position at XYZ Academy in Lagos.
 ### Pattern 1: PlayerVitals (Player Registration)
 
 **Type Definition**:
+
 ```typescript
 export interface PlayerVitals {
   name: string;
@@ -180,6 +189,7 @@ export interface PlayerVitals {
 ```
 
 **Contract Call** (in `lib/contract.ts`):
+
 ```typescript
 export async function buildRegisterPlayer(
   wallet: string,
@@ -190,7 +200,7 @@ export async function buildRegisterPlayer(
     'register_player',
     [
       nativeToScVal(wallet, { type: 'address' }),
-      nativeToScVal(vitals),  // ← Complex type, no explicit type hint needed
+      nativeToScVal(vitals), // ← Complex type, no explicit type hint needed
       nativeToScVal(ipfsHash, { type: 'string' }),
     ],
     wallet,
@@ -203,6 +213,7 @@ export async function buildRegisterPlayer(
 ### Pattern 2: ContactDetails (Pay-to-Contact)
 
 **Type Definition**:
+
 ```typescript
 export interface ContactDetails {
   email?: string;
@@ -212,6 +223,7 @@ export interface ContactDetails {
 ```
 
 **Contract Call**:
+
 ```typescript
 export async function payToContact(
   scout: string,
@@ -235,13 +247,13 @@ export async function payToContact(
 ```typescript
 export async function subscribe(
   scout: string,
-  tier: SubscriptionTier,  // 'basic' | 'pro' | 'elite'
+  tier: SubscriptionTier, // 'basic' | 'pro' | 'elite'
 ): Promise<void> {
   const xdrTx = await buildTx(
     'subscribe',
     [
       nativeToScVal(scout, { type: 'address' }),
-      nativeToScVal(tier, { type: 'string' }),  // ← Enum-like string
+      nativeToScVal(tier, { type: 'string' }), // ← Enum-like string
     ],
     scout,
   );
@@ -276,7 +288,7 @@ export function useTrialOffer() {
       playerId: string,
       location: string,
       startDate: string,
-      description: string
+      description: string,
     ) => {
       if (!publicKey) throw new Error('Wallet not connected');
 
@@ -309,7 +321,7 @@ export function useTrialOffer() {
         });
 
         const result = await rpc.sendTransaction(
-          new Transaction(signedTxXdr, NETWORK)
+          new Transaction(signedTxXdr, NETWORK),
         );
 
         if (result.status === 'ERROR') {
@@ -331,7 +343,7 @@ export function useTrialOffer() {
         setLoading(false);
       }
     },
-    [publicKey]
+    [publicKey],
   );
 
   function mapErrorMessage(errorText: string): string {
@@ -416,6 +428,7 @@ const sanitized = sanitize(userDescription);
 ```
 
 The `sanitize()` function:
+
 - **Client-side**: Uses DOMPurify to strip all HTML/script tags
 - **Server-side fallback**: Simple regex to remove tags
 - **Result**: Plain text safe for storage on-chain
@@ -426,12 +439,13 @@ The `sanitize()` function:
 
 From README.md, these error codes may be returned:
 
-| Code | Error               | Cause                                       |
-| ---- | ------------------- | ------------------------------------------- |
-| 9    | ContractPaused      | Contract is paused                          |
-| 10   | Unauthorized        | Scout wallet not authorized or mismatched   |
+| Code | Error          | Cause                                     |
+| ---- | -------------- | ----------------------------------------- |
+| 9    | ContractPaused | Contract is paused                        |
+| 10   | Unauthorized   | Scout wallet not authorized or mismatched |
 
 Additional context from `usePayToContact` pattern:
+
 - Always check wallet connection before calling
 - Map error codes to user-friendly messages
 - Retry logic may not be needed for trial offers (no subscription gate)
@@ -452,17 +466,16 @@ trial_offer_logged(scout: address, player_id: string, details: string)
 
 ## 9. Summary Table
 
-| Aspect | Details |
-| --- | --- |
-| **Contract Function** | `log_trial_offer(scout, player_id, details)` |
-| **Parameters** | `scout` (address), `player_id` (string), `details` (string) |
-| **Details Format** | JSON object serialized as string (recommended) |
-| **Details Content** | `{ location: string, startDate: string, description: string }` |
-| **Encoding** | `nativeToScVal(details, { type: 'string' })` |
-| **Serialization** | `JSON.stringify({ ... })` |
-| **Sanitization** | Yes — use `sanitize()` for all text fields |
-| **Authorization** | Scout's wallet must be connected and authorized |
-| **Return** | On success: player advances to Level 3, event emitted |
-| **Error Handling** | Map error codes (9, 10) to user-friendly messages |
-| **Existing Pattern** | Follow `usePayToContact` hook structure |
-
+| Aspect                | Details                                                        |
+| --------------------- | -------------------------------------------------------------- |
+| **Contract Function** | `log_trial_offer(scout, player_id, details)`                   |
+| **Parameters**        | `scout` (address), `player_id` (string), `details` (string)    |
+| **Details Format**    | JSON object serialized as string (recommended)                 |
+| **Details Content**   | `{ location: string, startDate: string, description: string }` |
+| **Encoding**          | `nativeToScVal(details, { type: 'string' })`                   |
+| **Serialization**     | `JSON.stringify({ ... })`                                      |
+| **Sanitization**      | Yes — use `sanitize()` for all text fields                     |
+| **Authorization**     | Scout's wallet must be connected and authorized                |
+| **Return**            | On success: player advances to Level 3, event emitted          |
+| **Error Handling**    | Map error codes (9, 10) to user-friendly messages              |
+| **Existing Pattern**  | Follow `usePayToContact` hook structure                        |
