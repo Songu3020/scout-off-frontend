@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/hooks/useWallet';
-import { getSubscription, buildSubscribe } from '@/lib/contract';
+import { getSubscription, subscribe as contractSubscribe } from '@/lib/contract';
 import type { Subscription, SubscriptionTier } from '@/types';
 
 export function useSubscription() {
@@ -37,8 +37,7 @@ export function useSubscription() {
       setLoading(true);
       setError(null);
       try {
-        const xdr = await buildSubscribe(publicKey, tier);
-        await signAndSubmit(xdr);
+        await contractSubscribe(publicKey, tier, signAndSubmit);
         await fetchSubscription();
       } catch (e: any) {
         setError(e.message);
