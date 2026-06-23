@@ -6,6 +6,7 @@ import { useWallet } from '@/hooks/useWallet';
 import useIsPaused from '@/hooks/useIsPaused';
 import { buildRegisterPlayer } from '@/lib/contract';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import VideoUpload from '@/components/ui/VideoUpload';
 import { AFRICAN_REGIONS } from '@/lib/regions';
@@ -160,41 +161,29 @@ export default function PlayerProfileForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Name *
-        </label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className={`input ${errors.name ? 'border-red-500' : ''}`}
-          placeholder="Enter your full name"
-        />
-        {errors.name && (
-          <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-        )}
-      </div>
+      <Input
+        id="player-name"
+        label="Name *"
+        type="text"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        error={errors.name}
+        placeholder="Enter your full name"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Age *
-        </label>
-        <input
-          type="number"
-          name="age"
-          value={formData.age}
-          onChange={handleChange}
-          className={`input ${errors.age ? 'border-red-500' : ''}`}
-          placeholder="Enter your age (14-45)"
-          min="14"
-          max="45"
-        />
-        {errors.age && (
-          <p className="text-sm text-red-500 mt-1">{errors.age}</p>
-        )}
-      </div>
+      <Input
+        id="player-age"
+        label="Age *"
+        type="number"
+        name="age"
+        value={formData.age}
+        onChange={handleChange}
+        error={errors.age}
+        placeholder="Enter your age (14-45)"
+        min="14"
+        max="45"
+      />
 
       <Select
         label="Position *"
@@ -226,22 +215,16 @@ export default function PlayerProfileForm({
         ))}
       </Select>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Nationality *
-        </label>
-        <input
-          type="text"
-          name="nationality"
-          value={formData.nationality}
-          onChange={handleChange}
-          className={`input ${errors.nationality ? 'border-red-500' : ''}`}
-          placeholder="Enter your nationality"
-        />
-        {errors.nationality && (
-          <p className="text-sm text-red-500 mt-1">{errors.nationality}</p>
-        )}
-      </div>
+      <Input
+        id="player-nationality"
+        label="Nationality *"
+        type="text"
+        name="nationality"
+        value={formData.nationality}
+        onChange={handleChange}
+        error={errors.nationality}
+        placeholder="Enter your nationality"
+      />
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">
