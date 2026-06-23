@@ -105,16 +105,17 @@ describe('useSubscription', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    let caughtError: Error | null = null;
+    let caughtError: unknown;
     await act(async () => {
       try {
         await result.current.subscribe('basic');
       } catch (e) {
-        caughtError = e as Error;
+        caughtError = e;
       }
     });
 
-    expect(caughtError?.message).toBe('InsufficientFee');
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toBe('InsufficientFee');
     expect(result.current.error).toBe('InsufficientFee');
   });
 });
