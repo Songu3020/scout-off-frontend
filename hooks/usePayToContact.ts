@@ -1,28 +1,29 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useWallet } from '@/hooks/useWallet';
 import { payToContact, getSubscription } from '@/lib/contract';
+import { extractContractErrorKey } from '@/lib/contractErrorMessage';
 import type { ContactDetails } from '@/types';
 
 export function usePayToContact() {
   const { publicKey, signAndSubmit } = useWallet();
+  const t = useTranslations('contractErrors');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Map contract error codes to user-friendly messages.
-   */
   function mapErrorMessage(errorText: string): string {
     if (errorText.includes('code 3') || errorText.includes('InsufficientFee')) {
-      return 'Insufficient balance. Please upgrade your subscription.';
+      return t('InsufficientFee');
     }
     if (
       errorText.includes('code 11') ||
       errorText.includes('SubscriptionExpired')
     ) {
-      return 'Your subscription has expired. Please renew it to access contact details.';
+      return t('SubscriptionExpired');
     }
-    return errorText || 'An error occurred while fetching contact details.';
+    const key = extractContractErrorKey(errorText);
+    return key ? t(key) : (errorText || t('unknown'));
   }
 
   const unlock = useCallback(
@@ -37,9 +38,7 @@ export function usePayToContact() {
         const subscription = await getSubscription(publicKey);
         const now = Date.now() / 1000;
         if (!subscription || subscription.expiresAt < now) {
-          throw new Error(
-            'Your subscription has expired. Please renew it to access contact details.',
-          );
+          throw new Error('SubscriptionExpired');
         }
 
         // Call the contract function

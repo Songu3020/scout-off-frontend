@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { sanitize } from '@/lib/sanitize';
 import { useWallet } from '@/hooks/useWallet';
 import useIsPaused from '@/hooks/useIsPaused';
+import { extractContractErrorKey } from '@/lib/contractErrorMessage';
 import { buildRegisterPlayer } from '@/lib/contract';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -105,6 +107,7 @@ export default function PlayerOnboardingWizard({
 }: PlayerOnboardingWizardProps) {
   const { publicKey, signAndSubmit } = useWallet();
   const isPaused = useIsPaused();
+  const tErrors = useTranslations('contractErrors');
 
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -249,8 +252,10 @@ export default function PlayerOnboardingWizard({
       onSuccess(playerId);
     } catch (error) {
       setTxStatus('error');
+      const rawMessage = error instanceof Error ? error.message : null;
+      const contractKey = rawMessage ? extractContractErrorKey(rawMessage) : null;
       setErrors({
-        form: error instanceof Error ? error.message : 'Registration failed',
+        form: contractKey ? tErrors(contractKey) : (rawMessage ?? 'Registration failed'),
       });
     } finally {
       setIsLoading(false);
