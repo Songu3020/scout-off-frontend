@@ -1,9 +1,16 @@
 import { Contract, nativeToScVal, scValToNative, xdr, TransactionBuilder as TB, Account } from "@stellar/stellar-sdk";
-import { rpc, NETWORK, BASE_FEE } from "./stellar";
+import { rpc, NETWORK, BASE_FEE, isValidStellarAddress } from "./stellar";
+import { ValidationError } from "./errors";
 import type { PlayerVitals } from "@/types";
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID!;
 const contract = new Contract(CONTRACT_ID);
+
+function assertAddress(value: string, label: string): void {
+  if (!isValidStellarAddress(value)) {
+    throw new ValidationError(`"${value}" is not a valid Stellar address (${label})`);
+  }
+}
 
 // ── Write helper (requires a real funded account) ─────────────────────────────
 async function buildTx(method: string, args: xdr.ScVal[], sourcePublicKey: string) {
@@ -30,6 +37,7 @@ async function simulateTx(method: string, args: xdr.ScVal[]) {
 
 // ── Player ────────────────────────────────────────────────────────────────────
 export async function buildRegisterPlayer(wallet: string, vitals: PlayerVitals, ipfsHash: string) {
+  assertAddress(wallet, "wallet");
   return buildTx("register_player", [
     nativeToScVal(wallet, { type: "address" }),
     nativeToScVal(vitals),
@@ -43,6 +51,7 @@ export async function getPlayer(playerId: string) {
 
 // ── Validator ─────────────────────────────────────────────────────────────────
 export async function buildApproveMilestone(validatorKey: string, playerId: string, milestone: string) {
+  assertAddress(validatorKey, "validatorKey");
   return buildTx("approve_milestone", [
     nativeToScVal(playerId, { type: "string" }),
     nativeToScVal(milestone, { type: "string" }),
@@ -52,6 +61,7 @@ export async function buildApproveMilestone(validatorKey: string, playerId: stri
 
 // ── Scout ─────────────────────────────────────────────────────────────────────
 export async function buildPayToContact(scoutKey: string, playerId: string) {
+  assertAddress(scoutKey, "scoutKey");
   return buildTx("pay_to_contact", [
     nativeToScVal(scoutKey, { type: "address" }),
     nativeToScVal(playerId, { type: "string" }),
