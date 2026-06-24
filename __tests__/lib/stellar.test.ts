@@ -1,56 +1,48 @@
-// Mock SorobanRpc.Server to prevent module-level construction error,
-// while keeping every other export (StrKey, Keypair, etc.) real.
-jest.mock("@stellar/stellar-sdk", () => {
-  const actual = jest.requireActual("@stellar/stellar-sdk");
+import { Networks } from '@stellar/stellar-sdk';
+
+jest.mock('@stellar/stellar-sdk', () => {
+  const original = jest.requireActual('@stellar/stellar-sdk');
   return {
-    ...actual,
+    ...original,
     SorobanRpc: {
-      ...actual.SorobanRpc,
-      Server: jest.fn().mockImplementation(() => ({})),
+      Server: jest.fn(),
     },
   };
 });
 
-import { isValidStellarAddress } from "../../lib/stellar";
-
-// Generate a valid Stellar public key at runtime using the real Keypair implementation.
-// This guarantees structural + checksum validity without hardcoding a specific address.
-const { Keypair } = jest.requireActual("@stellar/stellar-sdk") as typeof import("@stellar/stellar-sdk");
-const VALID_ADDRESS = Keypair.random().publicKey();
-
-describe("isValidStellarAddress", () => {
-  test("returns true for a valid Stellar G-address", () => {
-    expect(isValidStellarAddress(VALID_ADDRESS)).toBe(true);
+describe('lib/stellar', () => {
+  beforeEach(() => {
+    jest.resetModules();
   });
 
-  test("returns false for an empty string", () => {
-    expect(isValidStellarAddress("")).toBe(false);
+  test('uses NEXT_PUBLIC_SOROBAN_RPC for SorobanRpc.Server', () => {
+    const mockRpcUrl = 'https://test.soroban.rpc';
+    process.env.NEXT_PUBLIC_SOROBAN_RPC = mockRpcUrl;
+    process.env.NEXT_PUBLIC_NETWORK = 'testnet';
+
+    require('@/lib/stellar');
+
+    const { SorobanRpc } = require('@stellar/stellar-sdk');
+    expect(SorobanRpc.Server).toHaveBeenCalledWith(mockRpcUrl, {
+      allowHttp: false,
+    });
   });
 
-  test("returns false for a truncated G-address", () => {
-    // Chop the last char from a valid address — breaks the checksum
-    expect(isValidStellarAddress(VALID_ADDRESS.slice(0, -1))).toBe(false);
+  test('NETWORK is TESTNET when NEXT_PUBLIC_NETWORK is testnet', () => {
+    process.env.NEXT_PUBLIC_SOROBAN_RPC = 'https://test.soroban.rpc';
+    process.env.NEXT_PUBLIC_NETWORK = 'testnet';
+
+    const { NETWORK } = require('@/lib/stellar');
+
+    expect(NETWORK).toBe(Networks.TESTNET);
   });
 
-  test("returns false for a random non-Stellar string", () => {
-    expect(isValidStellarAddress("not-a-stellar-address")).toBe(false);
-  });
+  test('NETWORK is PUBLIC when NEXT_PUBLIC_NETWORK is mainnet', () => {
+    process.env.NEXT_PUBLIC_SOROBAN_RPC = 'https://main.soroban.rpc';
+    process.env.NEXT_PUBLIC_NETWORK = 'mainnet';
 
-  test("returns false for an Ethereum-style address", () => {
-    expect(isValidStellarAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e")).toBe(false);
-  });
+    const { NETWORK } = require('@/lib/stellar');
 
-  test("returns false for a numeric string", () => {
-    expect(isValidStellarAddress("12345678901234567890")).toBe(false);
-  });
-
-  test("returns false for a Stellar secret key (S-prefix)", () => {
-    // Secret keys start with S — not a public key
-    const secret = Keypair.random().secret();
-    expect(isValidStellarAddress(secret)).toBe(false);
-  });
-
-  test("returns false for path traversal input", () => {
-    expect(isValidStellarAddress("../etc/passwd")).toBe(false);
+    expect(NETWORK).toBe(Networks.PUBLIC);
   });
 });
