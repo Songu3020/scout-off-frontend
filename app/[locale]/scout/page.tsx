@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireWallet } from '@/hooks/useRequireWallet';
+import { useRequireSubscription } from '@/hooks/useRequireSubscription';
 import { useScout } from '@/hooks/useScout';
 import { getPlayer } from '@/lib/contract';
 import PlayerCard from '@/components/PlayerCard';
@@ -19,6 +20,7 @@ function isStellarKey(v: string) {
 
 function ScoutDashboardContent() {
   const { walletAddress: publicKey } = useRequireWallet();
+  const { isProtected, loading: subscriptionLoading } = useRequireSubscription();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -105,6 +107,9 @@ function ScoutDashboardContent() {
   }, []);
 
   if (!publicKey) return null;
+
+  // Show nothing while subscription is loading or redirecting
+  if (subscriptionLoading || !isProtected) return null;
 
   const showSkeletons = loading && !hasLoaded.current;
   const showEmptyState = searchHasCompleted && !loading && players.length === 0;
