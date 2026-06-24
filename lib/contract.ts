@@ -54,6 +54,11 @@ export async function checkIsValidator(address: string) {
   return simulateTx("is_validator", [nativeToScVal(address, { type: "address" })]);
 }
 
+// ── Milestones ────────────────────────────────────────────────────────────────
+export async function getMilestoneHistory(playerId: string) {
+  return simulateTx("get_milestone_history", [nativeToScVal(playerId, { type: "string" })]);
+}
+
 // ── Scout ─────────────────────────────────────────────────────────────────────
 export async function buildPayToContact(scoutKey: string, playerId: string) {
   return buildTx("pay_to_contact", [
