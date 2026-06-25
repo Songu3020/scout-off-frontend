@@ -42,12 +42,18 @@ const TIERS: Array<{
   },
 ];
 
+const TIER_ORDER: Record<SubscriptionTier, number> = { basic: 0, pro: 1, elite: 2 };
+
 function formatExpiry(timestamp: number) {
   return new Date(timestamp * 1000).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
+}
+
+function daysRemaining(expiresAt: number): number {
+  return Math.ceil((expiresAt - Date.now() / 1000) / 86400);
 }
 
 function SubscribeContent() {
@@ -146,18 +152,73 @@ function SubscribeContent() {
         )}
       </div>
 
+      {subscription && !isExpired && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-xl border border-brand-green/40 bg-brand-green/10 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+        >
+          <div>
+            <span className="text-xs uppercase tracking-widest text-brand-green font-semibold">
+              Active Subscription
+            </span>
+            <p className="text-white font-semibold mt-0.5">
+              {subscription.tier.charAt(0).toUpperCase() +
+                subscription.tier.slice(1)}{' '}
+              Plan
+            </p>
+          </div>
+          <div className="text-sm text-gray-300">
+            Expires{' '}
+            <span className="text-white font-medium">
+              {formatExpiry(subscription.expiresAt)}
+            </span>{' '}
+            &middot;{' '}
+            <span className="text-brand-green font-medium">
+              {daysRemaining(subscription.expiresAt)} day
+              {daysRemaining(subscription.expiresAt) !== 1 ? 's' : ''} remaining
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         {TIERS.map((plan) => {
           const isRecommended = plan.recommended ?? false;
           const isSelected = selectedTier === plan.tier;
+          const isActiveTier =
+            subscription && !isExpired && subscription.tier === plan.tier;
+
+          const ctaLabel = (() => {
+            if (loading && isSelected) return 'Processing…';
+            if (!subscription) return `Subscribe to ${plan.title}`;
+            const nearingExpiry =
+              !isExpired &&
+              subscription.tier === plan.tier &&
+              daysRemaining(subscription.expiresAt) <= 7;
+            if (
+              (isExpired || nearingExpiry) &&
+              subscription.tier === plan.tier
+            ) {
+              return `Renew ${plan.title}`;
+            }
+            if (
+              TIER_ORDER[plan.tier] > TIER_ORDER[subscription.tier]
+            ) {
+              return `Upgrade to ${plan.title}`;
+            }
+            return `Subscribe to ${plan.title}`;
+          })();
 
           return (
             <div
               key={plan.tier}
               className={`bg-brand-card border rounded-xl p-6 shadow-sm transition ${
-                isRecommended
-                  ? 'border-brand-green bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.08),_transparent)]'
-                  : 'border-gray-800'
+                isActiveTier
+                  ? 'border-brand-green ring-2 ring-brand-green/30 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent)]'
+                  : isRecommended
+                    ? 'border-brand-green bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.08),_transparent)]'
+                    : 'border-gray-800'
               }`}
             >
               <div className="flex items-center justify-between gap-4">
@@ -169,11 +230,18 @@ function SubscribeContent() {
                     {plan.price}
                   </p>
                 </div>
-                {isRecommended && (
-                  <span className="rounded-full bg-brand-green px-3 py-1 text-xs font-semibold uppercase text-black">
-                    Recommended
-                  </span>
-                )}
+                <div className="flex flex-col items-end gap-1.5">
+                  {isActiveTier && (
+                    <span className="rounded-full bg-brand-green/20 border border-brand-green/50 px-3 py-1 text-xs font-semibold uppercase text-brand-green">
+                      Active
+                    </span>
+                  )}
+                  {isRecommended && !isActiveTier && (
+                    <span className="rounded-full bg-brand-green px-3 py-1 text-xs font-semibold uppercase text-black">
+                      Recommended
+                    </span>
+                  )}
+                </div>
               </div>
 
               <p className="mt-4 text-sm text-gray-300">{plan.description}</p>
@@ -196,9 +264,7 @@ function SubscribeContent() {
                 onClick={() => handleSubscribe(plan.tier)}
                 disabled={loading}
               >
-                {loading && isSelected
-                  ? 'Processing…'
-                  : `Subscribe to ${plan.title}`}
+                {ctaLabel}
               </Button>
             </div>
           );
