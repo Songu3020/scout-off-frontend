@@ -7,6 +7,7 @@ import { PLATFORM_CONTACT_FEE_XLM } from '@/lib/contract';
 import ProgressBar from '@/components/ProgressBar';
 import PlayerProfileSkeleton from '@/components/PlayerProfileSkeleton';
 import TrialOfferForm from '@/components/scout/TrialOfferForm';
+import Badge from '@/components/ui/Badge';
 import { buildPayToContact } from '@/lib/contract';
 
 export default function PlayerProfile() {
