@@ -7,6 +7,7 @@ import {
   useCallback,
   ReactNode,
 } from 'react';
+import { mutate } from 'swr';
 import albedo from '@albedo-link/intent';
 import { NETWORK } from '@/lib/stellar';
 
@@ -145,7 +146,9 @@ interface WalletContextValue {
   publicKey: string | null;
   isAuthenticated: boolean;
   isConnecting: boolean;
+  isRestoringSession: boolean;
   xlmBalance: string | null;
+  balanceError: string | null;
   isLoadingBalance: boolean;
   walletProvider: WalletProvider | null;
   walletProviderInfo: WalletProviderInfo | null;
@@ -164,31 +167,30 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 const HORIZON_URL =
   process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org';
 
-/** Fetch the native XLM balance for a Stellar account via Horizon.
- *  Returns "0.00" for unfunded (404) accounts, null on other errors. */
-async function fetchXlmBalance(address: string): Promise<string> {
-  try {
-    const res = await fetch(`${HORIZON_URL}/accounts/${address}`);
-    if (res.status === 404) {
-      return '0.00';
-    }
-    if (!res.ok) throw new Error(`Horizon error: ${res.status}`);
-    const data = await res.json();
-    const native = (
-      data.balances as Array<{ asset_type: string; balance: string }>
-    ).find((b) => b.asset_type === 'native');
-    const raw = native ? parseFloat(native.balance) : 0;
-    return raw.toFixed(2);
-  } catch {
-    return '0.00';
-  }
+/**
+ * Fetch the native XLM balance for a Stellar account via Horizon.
+ * Returns "0.00" for unfunded (404) accounts.
+ * Returns null on network/server errors so callers can surface an error indicator.
+ */
+async function fetchXlmBalance(address: string): Promise<string | null> {
+  const res = await fetch(`${HORIZON_URL}/accounts/${address}`);
+  if (res.status === 404) return '0.00';
+  if (!res.ok) throw new Error(`Horizon error: ${res.status}`);
+  const data = await res.json();
+  const native = (
+    data.balances as Array<{ asset_type: string; balance: string }>
+  ).find((b) => b.asset_type === 'native');
+  const raw = native ? parseFloat(native.balance) : 0;
+  return raw.toFixed(2);
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [xlmBalance, setXlmBalance] = useState<string | null>(null);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [walletProvider, setWalletProvider] = useState<WalletProvider | null>(
     null,
@@ -202,9 +204,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   /** Fetch and store the XLM balance for the given address. */
   const loadBalance = useCallback(async (address: string) => {
     setIsLoadingBalance(true);
+    setBalanceError(null);
     try {
       const balance = await fetchXlmBalance(address);
       setXlmBalance(balance);
+    } catch (err: unknown) {
+      setXlmBalance(null);
+      setBalanceError(
+        err instanceof Error ? err.message : 'Failed to load balance',
+      );
     } finally {
       setIsLoadingBalance(false);
     }
@@ -228,6 +236,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         // Silently fail session restore
+      } finally {
+        setIsRestoringSession(false);
       }
     }
     restoreSession();
@@ -316,8 +326,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setPublicKey(null);
       setIsAuthenticated(false);
       setXlmBalance(null);
+      setBalanceError(null);
       setWalletProvider(null);
       removeStoredProvider();
+      // Clear all SWR caches so stale data from the previous session isn't
+      // shown briefly if a different wallet connects immediately after.
+      mutate(() => true, undefined, { revalidate: false });
     }
   }, []);
 
@@ -337,7 +351,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         publicKey,
         isAuthenticated,
         isConnecting,
+        isRestoringSession,
         xlmBalance,
+        balanceError,
         isLoadingBalance,
         walletProvider,
         walletProviderInfo,
