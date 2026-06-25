@@ -145,6 +145,7 @@ interface WalletContextValue {
   publicKey: string | null;
   isAuthenticated: boolean;
   isConnecting: boolean;
+  connectingProvider: WalletProvider | null;
   xlmBalance: string | null;
   isLoadingBalance: boolean;
   walletProvider: WalletProvider | null;
@@ -188,6 +189,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectingProvider, setConnectingProvider] = useState<WalletProvider | null>(null);
   const [xlmBalance, setXlmBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [walletProvider, setWalletProvider] = useState<WalletProvider | null>(
@@ -248,6 +250,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     async (provider: WalletProvider) => {
       const adapter = ADAPTERS[provider];
       setIsConnecting(true);
+      setConnectingProvider(provider);
       try {
         if (!(await adapter.isInstalled())) {
           throw new Error(`${provider} is not installed`);
@@ -284,6 +287,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         throw error;
       } finally {
         setIsConnecting(false);
+        setConnectingProvider(null);
       }
     },
     [loadBalance],
@@ -337,6 +341,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         publicKey,
         isAuthenticated,
         isConnecting,
+        connectingProvider,
         xlmBalance,
         isLoadingBalance,
         walletProvider,
