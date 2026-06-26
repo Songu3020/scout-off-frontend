@@ -2,7 +2,11 @@
 import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWallet } from '@/hooks/useWallet';
-import { WALLET_PROVIDERS } from '@/context/WalletContext';
+import {
+  WALLET_PROVIDERS,
+  WALLET_INSTALL_URLS,
+  isWalletInstalled,
+} from '@/context/WalletContext';
 import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
@@ -154,6 +158,14 @@ export default function WalletButton() {
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-white">{t('selectProvider')}</h2>
           <p className="text-sm text-gray-400">{t('selectProviderHint')}</p>
+          {noneInstalled && (
+            <div
+              role="status"
+              className="rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300"
+            >
+              {t('noWalletInstalledBanner')}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             {WALLET_PROVIDERS.length === 0 ? (
               <p className="text-sm text-gray-400">{t('noWalletDetected')}</p>
