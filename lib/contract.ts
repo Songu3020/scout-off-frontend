@@ -50,6 +50,14 @@ export async function buildApproveMilestone(validatorKey: string, playerId: stri
   ], validatorKey);
 }
 
+export async function buildRevokeMilestone(validatorKey: string, playerId: string, milestone: string) {
+  return buildTx("revoke_milestone", [
+    nativeToScVal(playerId, { type: "string" }),
+    nativeToScVal(milestone, { type: "string" }),
+    nativeToScVal(validatorKey, { type: "address" }),
+  ], validatorKey);
+}
+
 // ── Scout ─────────────────────────────────────────────────────────────────────
 export async function buildPayToContact(scoutKey: string, playerId: string) {
   return buildTx("pay_to_contact", [
