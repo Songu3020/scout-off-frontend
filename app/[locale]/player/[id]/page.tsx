@@ -1,4 +1,5 @@
 'use client';
+import { useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
 import { usePlayer } from '@/hooks/usePlayer';
@@ -94,6 +95,23 @@ export default function PlayerProfile() {
           Download Milestones
         </button>
       )}
+
+      {/* Share via QR */}
+      <button
+        ref={shareButtonRef}
+        onClick={() => setQrOpen(true)}
+        className="self-start text-sm text-gray-400 border border-gray-700 px-3 py-1.5 rounded-lg hover:border-gray-500 hover:text-white transition"
+      >
+        Share via QR
+      </button>
+      <QRModal
+        isOpen={qrOpen}
+        onClose={() => {
+          setQrOpen(false);
+          shareButtonRef.current?.focus();
+        }}
+        url={profileUrl}
+      />
 
       {/* Pay to contact */}
       {publicKey && (
