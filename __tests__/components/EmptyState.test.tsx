@@ -10,7 +10,9 @@ describe('EmptyState', () => {
   });
 
   it('renders description when provided', () => {
-    render(<EmptyState title="Empty" description="Try adjusting your filters." />);
+    render(
+      <EmptyState title="Empty" description="Try adjusting your filters." />,
+    );
     expect(screen.getByText('Try adjusting your filters.')).toBeInTheDocument();
   });
 
@@ -21,8 +23,12 @@ describe('EmptyState', () => {
 
   it('renders action button when provided', () => {
     const onClick = jest.fn();
-    render(<EmptyState title="Empty" action={{ label: 'Add Player', onClick }} />);
-    expect(screen.getByRole('button', { name: 'Add Player' })).toBeInTheDocument();
+    render(
+      <EmptyState title="Empty" action={{ label: 'Add Player', onClick }} />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Add Player' }),
+    ).toBeInTheDocument();
   });
 
   it('does not render action button when absent', () => {
@@ -32,14 +38,20 @@ describe('EmptyState', () => {
 
   it('calls action.onClick when action button is clicked', () => {
     const onClick = jest.fn();
-    render(<EmptyState title="Empty" action={{ label: 'Add Player', onClick }} />);
+    render(
+      <EmptyState title="Empty" action={{ label: 'Add Player', onClick }} />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Add Player' }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('matches snapshot', () => {
     const { container } = render(
-      <EmptyState title="No data" description="Nothing here." action={{ label: 'Go', onClick: jest.fn() }} />,
+      <EmptyState
+        title="No data"
+        description="Nothing here."
+        action={{ label: 'Go', onClick: jest.fn() }}
+      />,
     );
     expect(container.firstChild).toMatchSnapshot();
   });

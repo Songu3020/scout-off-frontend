@@ -1,7 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useContractEvents } from '@/hooks/useContractEvents';
 
-const CONTRACT = 'GABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF12345678';
+const CONTRACT =
+  'GABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF12345678';
 
 function makeOp(id: string, fnHint = '') {
   return {
@@ -73,20 +74,32 @@ describe('useContractEvents (polling fallback)', () => {
     const { result } = renderHook(() => useContractEvents(CONTRACT));
     await waitFor(() => expect(result.current.events).toHaveLength(1));
 
-    act(() => { jest.advanceTimersByTime(30_000); });
-    await waitFor(() => expect(global.fetch as jest.Mock).toHaveBeenCalledTimes(2));
+    act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
+    await waitFor(() =>
+      expect(global.fetch as jest.Mock).toHaveBeenCalledTimes(2),
+    );
     expect(result.current.events).toHaveLength(1);
   });
 
   it('prepends new events to the top of the list', async () => {
     global.fetch = (jest.fn() as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ _embedded: { records: [makeOp('6')] } }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ _embedded: { records: [makeOp('7')] } }) } as Response);
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ _embedded: { records: [makeOp('6')] } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ _embedded: { records: [makeOp('7')] } }),
+      } as Response);
 
     const { result } = renderHook(() => useContractEvents(CONTRACT));
     await waitFor(() => expect(result.current.events).toHaveLength(1));
 
-    act(() => { jest.advanceTimersByTime(30_000); });
+    act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
     await waitFor(() => expect(result.current.events).toHaveLength(2));
     expect(result.current.events[0].id).toBe('7');
     expect(result.current.events[1].id).toBe('6');
@@ -95,14 +108,18 @@ describe('useContractEvents (polling fallback)', () => {
   it('ignores non-invoke_host_function operations', async () => {
     mockFetch([{ id: '8', type: 'payment', created_at: '' }]);
     const { result } = renderHook(() => useContractEvents(CONTRACT));
-    await waitFor(() => expect(global.fetch as jest.Mock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(global.fetch as jest.Mock).toHaveBeenCalledTimes(1),
+    );
     expect(result.current.events).toHaveLength(0);
   });
 
   it('handles fetch errors silently without crashing', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('network'));
     const { result } = renderHook(() => useContractEvents(CONTRACT));
-    await waitFor(() => expect(global.fetch as jest.Mock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(global.fetch as jest.Mock).toHaveBeenCalledTimes(1),
+    );
     expect(result.current.events).toHaveLength(0);
   });
 

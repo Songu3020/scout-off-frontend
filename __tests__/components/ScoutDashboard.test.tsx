@@ -5,7 +5,9 @@ import '@testing-library/jest-dom';
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 jest.mock('@/hooks/useRequireWallet', () => ({
-  useRequireWallet: () => ({ walletAddress: 'GABC1234567890ABCDE1234567890ABCDE1234567890ABCDE123456' }),
+  useRequireWallet: () => ({
+    walletAddress: 'GABC1234567890ABCDE1234567890ABCDE1234567890ABCDE123456',
+  }),
 }));
 
 const mockSearch = jest.fn();
@@ -84,7 +86,12 @@ import ScoutDashboard from '@/app/[locale]/scout/page';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const EMPTY_SCOUT = { players: [], loading: false, error: null, search: mockSearch };
+const EMPTY_SCOUT = {
+  players: [],
+  loading: false,
+  error: null,
+  search: mockSearch,
+};
 
 function setupScout(overrides: Partial<typeof EMPTY_SCOUT> = {}) {
   mockUseScout.mockReturnValue({ ...EMPTY_SCOUT, ...overrides });
@@ -93,14 +100,18 @@ function setupScout(overrides: Partial<typeof EMPTY_SCOUT> = {}) {
 /** Advance the mock through a full loading cycle: idle → loading → done. */
 function simulateSearchCycle(
   rerender: (ui: React.ReactElement) => void,
-  resultPlayers: typeof EMPTY_SCOUT['players'] = [],
+  resultPlayers: (typeof EMPTY_SCOUT)['players'] = [],
 ) {
   act(() => {
     mockUseScout.mockReturnValue({ ...EMPTY_SCOUT, loading: true });
     rerender(<ScoutDashboard />);
   });
   act(() => {
-    mockUseScout.mockReturnValue({ ...EMPTY_SCOUT, loading: false, players: resultPlayers });
+    mockUseScout.mockReturnValue({
+      ...EMPTY_SCOUT,
+      loading: false,
+      players: resultPlayers,
+    });
     rerender(<ScoutDashboard />);
   });
 }
@@ -135,7 +146,21 @@ describe('ScoutDashboard — empty state', () => {
   it('does not show the empty state when the search returns players', () => {
     const { rerender } = render(<ScoutDashboard />);
     const players = [
-      { id: 'p1', wallet: 'G...', vitals: { name: 'A', age: 20, position: 'ST', region: 'NG', nationality: 'Nigerian' }, ipfsHash: '', progressLevel: 0 as const, milestones: [], createdAt: 0 },
+      {
+        id: 'p1',
+        wallet: 'G...',
+        vitals: {
+          name: 'A',
+          age: 20,
+          position: 'ST',
+          region: 'NG',
+          nationality: 'Nigerian',
+        },
+        ipfsHash: '',
+        progressLevel: 0 as const,
+        milestones: [],
+        createdAt: 0,
+      },
     ];
     simulateSearchCycle(rerender, players);
     expect(screen.queryByText('No players found')).not.toBeInTheDocument();
@@ -151,7 +176,11 @@ describe('ScoutDashboard — empty state', () => {
 
     // A second search starts — empty state must hide during loading
     act(() => {
-      mockUseScout.mockReturnValue({ ...EMPTY_SCOUT, loading: true, players: [] });
+      mockUseScout.mockReturnValue({
+        ...EMPTY_SCOUT,
+        loading: true,
+        players: [],
+      });
       rerender(<ScoutDashboard />);
     });
     expect(screen.queryByText('No players found')).not.toBeInTheDocument();
@@ -162,15 +191,15 @@ describe('ScoutDashboard — empty state', () => {
   it('renders the correct heading in the empty state', () => {
     const { rerender } = render(<ScoutDashboard />);
     simulateSearchCycle(rerender, []);
-    expect(screen.getByRole('heading', { name: /no players found/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /no players found/i }),
+    ).toBeInTheDocument();
   });
 
   it('renders the descriptive subtext in the empty state', () => {
     const { rerender } = render(<ScoutDashboard />);
     simulateSearchCycle(rerender, []);
-    expect(
-      screen.getByText('Try adjusting your filters.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Try adjusting your filters.')).toBeInTheDocument();
   });
 
   it('renders a "Reset Filters" button inside the empty state', () => {
@@ -219,7 +248,9 @@ describe('ScoutDashboard — empty state', () => {
   it('shows loading skeletons (not the empty state) during the very first search', () => {
     setupScout({ loading: true });
     render(<ScoutDashboard />);
-    expect(screen.getAllByTestId('player-card-skeleton').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByTestId('player-card-skeleton').length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText('No players found')).not.toBeInTheDocument();
   });
 });

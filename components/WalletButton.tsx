@@ -156,7 +156,9 @@ export default function WalletButton() {
       {/* Wallet Selection Modal */}
       <Modal isOpen={showWalletModal} onClose={closeWalletModal}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-white">{t('selectProvider')}</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {t('selectProvider')}
+          </h2>
           <p className="text-sm text-gray-400">{t('selectProviderHint')}</p>
           {noneInstalled && (
             <div

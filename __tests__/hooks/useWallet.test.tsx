@@ -70,7 +70,9 @@ describe('useWallet', () => {
       // balance fetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ balances: [{ asset_type: 'native', balance: '10.0000000' }] }),
+        json: async () => ({
+          balances: [{ asset_type: 'native', balance: '10.0000000' }],
+        }),
       });
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -86,7 +88,9 @@ describe('useWallet', () => {
 
   test('isRestoringSession is true during restore and false after', async () => {
     let resolveSession: (v: unknown) => void;
-    const sessionPromise = new Promise((res) => { resolveSession = res; });
+    const sessionPromise = new Promise((res) => {
+      resolveSession = res;
+    });
 
     (global.fetch as jest.Mock).mockReturnValueOnce(sessionPromise);
 
@@ -112,7 +116,9 @@ describe('useWallet', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ balances: [{ asset_type: 'native', balance: '5.0000000' }] }),
+        json: async () => ({
+          balances: [{ asset_type: 'native', balance: '5.0000000' }],
+        }),
       });
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -216,11 +222,9 @@ describe('useWallet', () => {
       await result.current.disconnect();
     });
 
-    expect(swrMutate).toHaveBeenCalledWith(
-      expect.any(Function),
-      undefined,
-      { revalidate: false },
-    );
+    expect(swrMutate).toHaveBeenCalledWith(expect.any(Function), undefined, {
+      revalidate: false,
+    });
   });
 
   test('balanceError is set when Horizon returns a server error', async () => {

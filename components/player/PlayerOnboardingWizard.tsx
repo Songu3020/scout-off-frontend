@@ -168,7 +168,8 @@ export default function PlayerOnboardingWizard({
       errs.age = 'Age is required';
     } else {
       const n = parseInt(data.age);
-      if (isNaN(n) || n < 14 || n > 45) errs.age = 'Age must be between 14 and 45';
+      if (isNaN(n) || n < 14 || n > 45)
+        errs.age = 'Age must be between 14 and 45';
     }
     if (!data.nationality.trim()) errs.nationality = 'Nationality is required';
     if (!data.region) errs.region = 'Region is required';
@@ -253,9 +254,13 @@ export default function PlayerOnboardingWizard({
     } catch (error) {
       setTxStatus('error');
       const rawMessage = error instanceof Error ? error.message : null;
-      const contractKey = rawMessage ? extractContractErrorKey(rawMessage) : null;
+      const contractKey = rawMessage
+        ? extractContractErrorKey(rawMessage)
+        : null;
       setErrors({
-        form: contractKey ? tErrors(contractKey) : (rawMessage ?? 'Registration failed'),
+        form: contractKey
+          ? tErrors(contractKey)
+          : (rawMessage ?? 'Registration failed'),
       });
     } finally {
       setIsLoading(false);

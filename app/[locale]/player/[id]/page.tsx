@@ -11,13 +11,24 @@ import PlayerProfileSkeleton from '@/components/PlayerProfileSkeleton';
 import PlayerStatsCard from '@/components/player/PlayerStatsCard';
 import TrialOfferForm from '@/components/scout/TrialOfferForm';
 import Button from '@/components/ui/Button';
+import QRModal from '@/components/ui/QRModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function PlayerProfile() {
   const { id } = useParams<{ id: string }>();
   const { publicKey } = useWallet();
   const { player, loading: playerLoading, refetch } = usePlayer(id ?? null);
   const { unlock, loading: contacting } = usePayToContact();
-  const { subscription, isExpired, loading: subscriptionLoading } = useSubscription();
+  const {
+    subscription,
+    isExpired,
+    loading: subscriptionLoading,
+  } = useSubscription();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const milestones = player?.milestones ?? [];
+  const profileUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   async function handleConfirm() {
     await unlock(id);
@@ -49,7 +60,8 @@ export default function PlayerProfile() {
   }
 
   const isScoutWithActiveSubscription = publicKey && subscription && !isExpired;
-  const canLogTrialOffer = isScoutWithActiveSubscription && player && player.progressLevel < 3;
+  const canLogTrialOffer =
+    isScoutWithActiveSubscription && player && player.progressLevel < 3;
 
   if (playerLoading) {
     return <PlayerProfileSkeleton showContactButton={!!publicKey} />;
@@ -140,23 +152,15 @@ export default function PlayerProfile() {
 
       {/* Pay to contact */}
       {publicKey && (
-        <button
-          onClick={handleDownload}
-          className="self-start text-sm text-brand-green underline underline-offset-2 hover:opacity-80 transition"
-        >
-          Download Milestones
-        </button>
-      )}
-
-      {/* Pay to contact */}
-      {publicKey && (
         <>
           <button
             onClick={() => setConfirmOpen(true)}
             disabled={contacting}
             className="bg-brand-green text-black font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
-            {contacting ? 'Processing…' : `Pay to Contact (${PLATFORM_CONTACT_FEE_XLM} XLM)`}
+            {contacting
+              ? 'Processing…'
+              : `Pay to Contact (${PLATFORM_CONTACT_FEE_XLM} XLM)`}
           </button>
           <ConfirmDialog
             isOpen={confirmOpen}
@@ -193,7 +197,8 @@ export default function PlayerProfile() {
           ) : !subscriptionLoading && isExpired ? (
             <div className="bg-brand-card border border-gray-700 rounded-xl p-6">
               <p className="text-sm text-gray-400">
-                Your subscription has expired. Renew your subscription to log trial offers.
+                Your subscription has expired. Renew your subscription to log
+                trial offers.
               </p>
             </div>
           ) : null}

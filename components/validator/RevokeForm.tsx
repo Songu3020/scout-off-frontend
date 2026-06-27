@@ -83,6 +83,14 @@ export default function RevokeForm({ onSuccess }: RevokeFormProps) {
             <p className="text-sm text-red-500 mt-1">{validationErrors.playerId}</p>
           )}
         </div>
+      )}
+      {/* Warning banner */}
+      <div className="flex items-start gap-2 rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300">
+        <span aria-hidden>⚠️</span>
+        <span>
+          Revoking a milestone may reduce the player&apos;s progress level.
+        </span>
+      </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -102,16 +110,31 @@ export default function RevokeForm({ onSuccess }: RevokeFormProps) {
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <Button
-          type="submit"
-          variant="danger"
-          isLoading={isLoading}
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? "Revoking..." : "Revoke Milestone"}
-        </Button>
-      </form>
+      {/* Disabled notice */}
+      {!walletAuthorized && (
+        <p className="text-sm text-gray-500" role="status">
+          Your wallet is not authorized to revoke milestones.
+        </p>
+      )}
+
+      {/* Success */}
+      {success && (
+        <p role="status" className="text-sm text-brand-green">
+          Milestone revoked successfully.
+        </p>
+      )}
+
+      {/* Revoke button */}
+      <button
+        type="button"
+        disabled={!selected || !walletAuthorized || loading || paused}
+        onClick={() => setConfirmOpen(true)}
+        aria-describedby={error || txError ? 'revoke-error-summary' : undefined}
+        title={paused ? 'Contract is currently paused' : undefined}
+        className="self-start rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Revoking…' : 'Revoke Selected Milestone'}
+      </button>
 
       <ConfirmDialog
         isOpen={showConfirm}

@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PlayerOnboardingWizard from '@/components/player/PlayerOnboardingWizard';
 import { useWallet } from '@/hooks/useWallet';
@@ -407,7 +413,9 @@ describe('PlayerOnboardingWizard', () => {
     fireEvent.click(screen.getByRole('button', { name: /upload video/i }));
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: /register as player/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /register as player/i }),
+    );
 
     await waitFor(() => {
       expect(
