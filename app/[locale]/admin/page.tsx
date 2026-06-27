@@ -53,7 +53,9 @@ function AdminDashboardContent() {
   const [validatorInput, setValidatorInput] = useState('');
   const [removeTarget, setRemoveTarget] = useState('');
 
-  const [withdrawTxStatus, setWithdrawTxStatus] = useState<TxStatus | null>(null);
+  const [withdrawTxStatus, setWithdrawTxStatus] = useState<TxStatus | null>(
+    null,
+  );
   const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
 
   const [activity, setActivity] = useState<ActivityEvent[]>([]);

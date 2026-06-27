@@ -55,11 +55,27 @@ export default function PlayerStatsCard({
     <div className="bg-brand-card border border-gray-800 rounded-xl p-6">
       <h2 className="font-semibold text-white mb-4">Player Stats</h2>
       <div className="grid grid-cols-2 gap-4">
-        <StatCell icon={<Goal className="h-5 w-5" />} value={stats.goals} label="Goals" />
-        <StatCell icon={<Hand className="h-5 w-5" />} value={stats.assists} label="Assists" />
-        <StatCell icon={<CalendarDays className="h-5 w-5" />} value={stats.appearances} label="Appearances" />
+        <StatCell
+          icon={<Goal className="h-5 w-5" />}
+          value={stats.goals}
+          label="Goals"
+        />
+        <StatCell
+          icon={<Hand className="h-5 w-5" />}
+          value={stats.assists}
+          label="Assists"
+        />
+        <StatCell
+          icon={<CalendarDays className="h-5 w-5" />}
+          value={stats.appearances}
+          label="Appearances"
+        />
         {isGK && (
-          <StatCell icon={<Shield className="h-5 w-5" />} value={stats.clean_sheets ?? 0} label="Clean Sheets" />
+          <StatCell
+            icon={<Shield className="h-5 w-5" />}
+            value={stats.clean_sheets ?? 0}
+            label="Clean Sheets"
+          />
         )}
       </div>
     </div>

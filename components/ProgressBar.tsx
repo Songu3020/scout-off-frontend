@@ -1,5 +1,9 @@
 import type { ProgressLevel } from '@/types';
-import { PROGRESS_LEVELS, getProgressLabel, getProgressColor } from '@/lib/progress';
+import {
+  PROGRESS_LEVELS,
+  getProgressLabel,
+  getProgressColor,
+} from '@/lib/progress';
 
 /*
  * WCAG 2.1 AA Contrast Audit

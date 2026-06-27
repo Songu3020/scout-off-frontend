@@ -6,15 +6,15 @@ This guide walks you from a freshly cloned repository to a fully running local s
 
 ## Prerequisites
 
-| Tool                         | Version / Requirement                                       | Check                          |
-| ---------------------------- | ----------------------------------------------------------- | ------------------------------ |
-| **Node.js**                  | 20.x or later                                               | `node --version`               |
-| **npm**                      | 10.x or later (bundled with Node)                           | `npm --version`                |
-| **Rust** (stable)            | 1.70+                                                       | `rustc --version`              |
-| **wasm32 target**            | `wasm32-unknown-unknown`                                    | `rustup target list --installed` |
-| **Stellar CLI**              | Latest (`stellar --version` ≥ 22.0)                         | `stellar --version`            |
-| **Freighter** (browser ext.) | [Freighter Wallet](https://www.freighter.app/) in Chrome/Firefox | Check extensions list    |
-| **Git**                      | Any recent version                                          | `git --version`                |
+| Tool                         | Version / Requirement                                            | Check                            |
+| ---------------------------- | ---------------------------------------------------------------- | -------------------------------- |
+| **Node.js**                  | 20.x or later                                                    | `node --version`                 |
+| **npm**                      | 10.x or later (bundled with Node)                                | `npm --version`                  |
+| **Rust** (stable)            | 1.70+                                                            | `rustc --version`                |
+| **wasm32 target**            | `wasm32-unknown-unknown`                                         | `rustup target list --installed` |
+| **Stellar CLI**              | Latest (`stellar --version` ≥ 22.0)                              | `stellar --version`              |
+| **Freighter** (browser ext.) | [Freighter Wallet](https://www.freighter.app/) in Chrome/Firefox | Check extensions list            |
+| **Git**                      | Any recent version                                               | `git --version`                  |
 
 ### Install missing prerequisites
 
@@ -75,18 +75,18 @@ cp .env.example .env.local
 
 Open `.env.local` and fill in the required values. At minimum you need these for local dev:
 
-| Variable                   | Value                                          |
-| -------------------------- | ---------------------------------------------- |
-| `NEXT_PUBLIC_NETWORK`      | `testnet`                                      |
-| `NEXT_PUBLIC_HORIZON_URL`  | `https://horizon-testnet.stellar.org`          |
-| `NEXT_PUBLIC_SOROBAN_RPC`  | `https://soroban-testnet.stellar.org`          |
-| `NEXT_PUBLIC_API_URL`      | `http://localhost:4000`                        |
-| `NEXT_PUBLIC_CONTRACT_ID`  | _Leave blank for now; fill in after step 6_   |
-| `NEXT_PUBLIC_ADMIN_ADDRESS`| Your testnet wallet public key                |
-| `PINATA_API_KEY`           | _Optional for local dev (IPFS uploads)_        |
-| `PINATA_SECRET`            | _Optional for local dev (IPFS uploads)_        |
-| `STELLAR_SECRET_KEY`       | Your testnet wallet secret key                |
-| `NEXT_PUBLIC_APP_URL`      | `http://localhost:3000`                        |
+| Variable                    | Value                                       |
+| --------------------------- | ------------------------------------------- |
+| `NEXT_PUBLIC_NETWORK`       | `testnet`                                   |
+| `NEXT_PUBLIC_HORIZON_URL`   | `https://horizon-testnet.stellar.org`       |
+| `NEXT_PUBLIC_SOROBAN_RPC`   | `https://soroban-testnet.stellar.org`       |
+| `NEXT_PUBLIC_API_URL`       | `http://localhost:4000`                     |
+| `NEXT_PUBLIC_CONTRACT_ID`   | _Leave blank for now; fill in after step 6_ |
+| `NEXT_PUBLIC_ADMIN_ADDRESS` | Your testnet wallet public key              |
+| `PINATA_API_KEY`            | _Optional for local dev (IPFS uploads)_     |
+| `PINATA_SECRET`             | _Optional for local dev (IPFS uploads)_     |
+| `STELLAR_SECRET_KEY`        | Your testnet wallet secret key              |
+| `NEXT_PUBLIC_APP_URL`       | `http://localhost:3000`                     |
 
 Validate that all expected variables are declared:
 
@@ -205,6 +205,7 @@ Missing from .env.example: SOME_VAR_NAME
 This means a `process.env.SOME_VAR_NAME` is referenced in source code (`.ts` / `.tsx` files) but is not declared in `.env.example`.
 
 **Solution:**
+
 - If it's a new variable you need: add it to `.env.example` and `.env.local` with a value.
 - If it's a stale reference: search for the variable in the codebase and remove it, or add it to `.env.example`.
 
@@ -223,6 +224,7 @@ Resource temporarily unavailable
 Or wallet operations show `"account not found"` / `"insufficient balance"`.
 
 **Solution:**
+
 1. Verify your account exists on testnet: visit `https://horizon-testnet.stellar.org/accounts/<YOUR_PUBLIC_KEY>`.
 2. If you get a 404, the account hasn't been created yet — fund it via Friendbot:
    ```
@@ -238,6 +240,7 @@ Or wallet operations show `"account not found"` / `"insufficient balance"`.
 This happens when one component of the stack is on the wrong network.
 
 **Checklist:**
+
 1. `.env.local` → `NEXT_PUBLIC_NETWORK=testnet` (not `mainnet`)
 2. `.env.local` → `NEXT_PUBLIC_HORIZON_URL=https://horizon-testnet.stellar.org`
 3. `.env.local` → `NEXT_PUBLIC_SOROBAN_RPC=https://soroban-testnet.stellar.org`

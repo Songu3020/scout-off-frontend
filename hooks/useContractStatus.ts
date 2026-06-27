@@ -14,7 +14,9 @@ export function useContractStatus() {
     async function check() {
       try {
         const [healthOk, paused] = await Promise.all([
-          getContractHealth().then((): boolean => true).catch((): boolean => false),
+          getContractHealth()
+            .then((): boolean => true)
+            .catch((): boolean => false),
           getContractPaused().catch((): boolean => false),
         ]);
         if (!mounted.current) return;

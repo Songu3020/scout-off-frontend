@@ -25,11 +25,13 @@ const PREFETCH_DELAY_MS = 200;
 
 function PlayerCard({ player }: { player: Player }) {
   const { id } = player;
-  const { data: milestones, error: milestonesError, isLoading: milestonesLoading } = useSWR(
-    `milestones:${id}`,
-    () => getMilestoneHistory(id),
-    { revalidateOnFocus: false }
-  );
+  const {
+    data: milestones,
+    error: milestonesError,
+    isLoading: milestonesLoading,
+  } = useSWR(`milestones:${id}`, () => getMilestoneHistory(id), {
+    revalidateOnFocus: false,
+  });
   const milestoneCount = milestones ? milestones.length : 0;
   const { id, vitals, progressLevel, ipfsHash } = player;
   const router = useRouter();
@@ -135,17 +137,17 @@ function PlayerCard({ player }: { player: Player }) {
           size="sm"
           className="mt-1"
         />
-          {/* Milestone count badge */}
-          {milestonesLoading ? (
-            <span className="inline-block h-4 w-12 bg-gray-600 rounded animate-pulse mt-1" />
-          ) : (
-            <Badge
-              variant="region"
-              label={`${milestoneCount} milestones`}
-              size="sm"
-              className="mt-1"
-            />
-          )}
+        {/* Milestone count badge */}
+        {milestonesLoading ? (
+          <span className="inline-block h-4 w-12 bg-gray-600 rounded animate-pulse mt-1" />
+        ) : (
+          <Badge
+            variant="region"
+            label={`${milestoneCount} milestones`}
+            size="sm"
+            className="mt-1"
+          />
+        )}
       </div>
 
       <ProgressBar level={progressLevel} />

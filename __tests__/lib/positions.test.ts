@@ -1,7 +1,17 @@
 import { FOOTBALL_POSITIONS } from '@/lib/positions';
 
 const EXPECTED_VALUES = [
-  'GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'CF',
+  'GK',
+  'CB',
+  'LB',
+  'RB',
+  'CDM',
+  'CM',
+  'CAM',
+  'LW',
+  'RW',
+  'ST',
+  'CF',
 ] as const;
 
 describe('FOOTBALL_POSITIONS', () => {
