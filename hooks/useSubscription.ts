@@ -2,7 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWallet } from '@/hooks/useWallet';
-import { getSubscription, subscribe as contractSubscribe } from '@/lib/contract';
+import {
+  getSubscription,
+  subscribe as contractSubscribe,
+} from '@/lib/contract';
 import { extractContractErrorKey } from '@/lib/contractErrorMessage';
 import type { Subscription, SubscriptionTier } from '@/types';
 

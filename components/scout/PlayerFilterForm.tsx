@@ -50,7 +50,7 @@ export default function PlayerFilterForm({
   const [filter, setFilter] = useState<FilterState>(() => ({
     region: searchParams.get('region') ?? DEFAULTS.region,
     position: searchParams.get('position') ?? DEFAULTS.position,
-    level: (Number(searchParams.get('level') ?? DEFAULTS.level)) as ProgressLevel,
+    level: Number(searchParams.get('level') ?? DEFAULTS.level) as ProgressLevel,
   }));
 
   // Cancel pending debounce on unmount
@@ -97,8 +97,7 @@ export default function PlayerFilterForm({
 
   const handleChange = useCallback(
     (field: keyof FilterState, raw: string) => {
-      const value =
-        field === 'level' ? (Number(raw) as ProgressLevel) : raw;
+      const value = field === 'level' ? (Number(raw) as ProgressLevel) : raw;
       const next = { ...filter, [field]: value } as FilterState;
       setFilter(next);
       updateURL(next);

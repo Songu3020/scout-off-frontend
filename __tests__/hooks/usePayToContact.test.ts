@@ -84,7 +84,9 @@ describe('usePayToContact — subscription gate', () => {
     });
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockBuildPayToContact).not.toHaveBeenCalled();
     expect(show).toHaveBeenCalledWith(
@@ -103,7 +105,9 @@ describe('usePayToContact — subscription gate', () => {
     mockGetSubscription.mockResolvedValue(null);
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockBuildPayToContact).not.toHaveBeenCalled();
     expect(show).toHaveBeenCalledWith(
@@ -121,11 +125,15 @@ describe('usePayToContact — subscription gate', () => {
 
     const { result } = renderHook(() => usePayToContact());
     await act(async () => {
-      try { await result.current.unlock(PLAYER_ID); } catch {}
+      try {
+        await result.current.unlock(PLAYER_ID);
+      } catch {}
     });
 
     expect(mockBuildPayToContact).not.toHaveBeenCalled();
-    expect(show).toHaveBeenCalledWith(expect.objectContaining({ variant: 'error' }));
+    expect(show).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error' }),
+    );
     expect(result.current.loading).toBe(false);
   });
 });
@@ -139,7 +147,9 @@ describe('usePayToContact — balance gate', () => {
     activeSubscription();
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockBuildPayToContact).not.toHaveBeenCalled();
     expect(show).toHaveBeenCalledWith(
@@ -163,7 +173,9 @@ describe('usePayToContact — balance gate', () => {
     activeSubscription();
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockBuildPayToContact).not.toHaveBeenCalled();
     expect(show).toHaveBeenCalledWith(
@@ -181,7 +193,9 @@ describe('usePayToContact — balance gate', () => {
     mockBuildPayToContact.mockResolvedValue('SOME_XDR');
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockBuildPayToContact).toHaveBeenCalled();
     expect(signAndSubmit).toHaveBeenCalledWith('SOME_XDR');
@@ -201,7 +215,9 @@ describe('usePayToContact — validation order', () => {
     });
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(show).toHaveBeenCalledTimes(1);
     expect(show).toHaveBeenCalledWith(
@@ -223,7 +239,9 @@ describe('usePayToContact — success path', () => {
     mockBuildPayToContact.mockResolvedValue('SIGNED_XDR');
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockBuildPayToContact).toHaveBeenCalledWith(SCOUT_KEY, PLAYER_ID);
     expect(signAndSubmit).toHaveBeenCalledWith('SIGNED_XDR');
@@ -241,7 +259,9 @@ describe('usePayToContact — success path', () => {
 
     expect(result.current.loading).toBe(false);
 
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(result.current.loading).toBe(false);
   });
@@ -251,7 +271,9 @@ describe('usePayToContact — success path', () => {
     makeWallet({ publicKey: null });
 
     const { result } = renderHook(() => usePayToContact());
-    await act(async () => { await result.current.unlock(PLAYER_ID); });
+    await act(async () => {
+      await result.current.unlock(PLAYER_ID);
+    });
 
     expect(mockGetSubscription).not.toHaveBeenCalled();
     expect(mockBuildPayToContact).not.toHaveBeenCalled();

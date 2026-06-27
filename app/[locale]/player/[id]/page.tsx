@@ -17,7 +17,11 @@ export default function PlayerProfile() {
   const { publicKey } = useWallet();
   const { player, loading: playerLoading, refetch } = usePlayer(id ?? null);
   const { unlock, loading: contacting } = usePayToContact();
-  const { subscription, isExpired, loading: subscriptionLoading } = useSubscription();
+  const {
+    subscription,
+    isExpired,
+    loading: subscriptionLoading,
+  } = useSubscription();
 
   async function handleConfirm() {
     await unlock(id);
@@ -49,7 +53,8 @@ export default function PlayerProfile() {
   }
 
   const isScoutWithActiveSubscription = publicKey && subscription && !isExpired;
-  const canLogTrialOffer = isScoutWithActiveSubscription && player && player.progressLevel < 3;
+  const canLogTrialOffer =
+    isScoutWithActiveSubscription && player && player.progressLevel < 3;
 
   if (playerLoading) {
     return <PlayerProfileSkeleton showContactButton={!!publicKey} />;
@@ -156,7 +161,9 @@ export default function PlayerProfile() {
             disabled={contacting}
             className="bg-brand-green text-black font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
-            {contacting ? 'Processing…' : `Pay to Contact (${PLATFORM_CONTACT_FEE_XLM} XLM)`}
+            {contacting
+              ? 'Processing…'
+              : `Pay to Contact (${PLATFORM_CONTACT_FEE_XLM} XLM)`}
           </button>
           <ConfirmDialog
             isOpen={confirmOpen}
@@ -193,7 +200,8 @@ export default function PlayerProfile() {
           ) : !subscriptionLoading && isExpired ? (
             <div className="bg-brand-card border border-gray-700 rounded-xl p-6">
               <p className="text-sm text-gray-400">
-                Your subscription has expired. Renew your subscription to log trial offers.
+                Your subscription has expired. Renew your subscription to log
+                trial offers.
               </p>
             </div>
           ) : null}

@@ -465,7 +465,7 @@ Test coverage targets:
 | UI primitives        | ✅ Complete    | Modal, Toast, Badge, Button, Spinner, Select, Tooltip,         |
 |                      |                | VideoUpload, ConfirmDialog, EmptyState, TransactionStatus,     |
 |                      |                | ErrorBoundary                                                  |
-| Player components    | ✅ Complete    | PlayerProfileForm, UpdateProfileForm,           |
+| Player components    | ✅ Complete    | PlayerProfileForm, UpdateProfileForm,                          |
 |                      |                | MilestoneTimeline, IPFSMediaGallery                            |
 | Player dashboard     | ✅ Complete    | Register + milestone history                                   |
 | Player profile page  | ✅ Complete    | Public view + pay-to-contact                                   |

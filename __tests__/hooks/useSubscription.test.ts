@@ -15,7 +15,10 @@ jest.mock('@/lib/contract', () => ({
 }));
 
 import { useWallet } from '@/hooks/useWallet';
-import { getSubscription, subscribe as contractSubscribe } from '@/lib/contract';
+import {
+  getSubscription,
+  subscribe as contractSubscribe,
+} from '@/lib/contract';
 
 const mockUseWallet = useWallet as jest.Mock;
 const mockGetSubscription = getSubscription as jest.Mock;

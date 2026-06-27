@@ -163,7 +163,9 @@ describe('UpdateProfileForm', () => {
 
     expect(mockedUpdateProfile).toHaveBeenCalled();
     // error message should be displayed
-    expect(screen.getByText(/Failed to update profile media/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Failed to update profile media/i),
+    ).toBeInTheDocument();
     expect(onSuccess).not.toHaveBeenCalled();
   });
 });

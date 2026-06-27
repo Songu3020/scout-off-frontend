@@ -19,7 +19,8 @@ export const Default: Story = {
   args: {
     isOpen: true,
     title: 'Remove Validator',
-    message: 'Are you sure you want to remove this validator? This action cannot be undone.',
+    message:
+      'Are you sure you want to remove this validator? This action cannot be undone.',
   },
 };
 
@@ -27,7 +28,8 @@ export const WithCustomLabels: Story = {
   args: {
     isOpen: true,
     title: 'Pause Contract',
-    message: 'Pausing the contract will disable all write operations for all users. Continue?',
+    message:
+      'Pausing the contract will disable all write operations for all users. Continue?',
     confirmLabel: 'Yes, Pause',
     cancelLabel: 'Keep Active',
   },

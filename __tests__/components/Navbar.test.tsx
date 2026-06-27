@@ -17,7 +17,11 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/hooks/useContractStatus', () => ({
-  useContractStatus: () => ({ isPaused: false, isHealthy: true, isLoading: false }),
+  useContractStatus: () => ({
+    isPaused: false,
+    isHealthy: true,
+    isLoading: false,
+  }),
 }));
 
 jest.mock('next/link', () => {
@@ -152,7 +156,9 @@ describe('Navbar', () => {
     render(<Navbar />);
 
     const user = userEvent.setup({ delay: null });
-    const copyBtn = screen.getByRole('button', { name: /Copy wallet address/i });
+    const copyBtn = screen.getByRole('button', {
+      name: /Copy wallet address/i,
+    });
     await user.click(copyBtn);
 
     expect(writeText).toHaveBeenCalledTimes(1);
@@ -265,7 +271,11 @@ describe('Navbar', () => {
   test('shows maintenance banner when contract is paused', () => {
     const { useContractStatus } = require('@/hooks/useContractStatus');
     jest.doMock('@/hooks/useContractStatus', () => ({
-      useContractStatus: () => ({ isPaused: true, isHealthy: true, isLoading: false }),
+      useContractStatus: () => ({
+        isPaused: true,
+        isHealthy: true,
+        isLoading: false,
+      }),
     }));
 
     mockUseWallet.mockReturnValue({

@@ -58,7 +58,10 @@ export const AllStates: Story = {
         txHash="abc123def456abc123def456abc123def456abc123def456abc123def456abc123"
         autoHideMs={99999}
       />
-      <TransactionStatus status="error" error="Contract error: subscription expired (code 8)." />
+      <TransactionStatus
+        status="error"
+        error="Contract error: subscription expired (code 8)."
+      />
     </div>
   ),
 };
@@ -66,7 +69,9 @@ export const AllStates: Story = {
 export const Interactive: Story = {
   name: 'Interactive Flow',
   render: () => {
-    const [status, setStatus] = useState<'pending' | 'success' | 'error' | null>(null);
+    const [status, setStatus] = useState<
+      'pending' | 'success' | 'error' | null
+    >(null);
 
     const simulate = async (outcome: 'success' | 'error') => {
       setStatus('pending');
@@ -78,8 +83,12 @@ export const Interactive: Story = {
       <div className="flex flex-col gap-4 max-w-lg">
         <div className="flex gap-3">
           <Button onClick={() => simulate('success')}>Simulate Success</Button>
-          <Button variant="danger" onClick={() => simulate('error')}>Simulate Error</Button>
-          <Button variant="secondary" onClick={() => setStatus(null)}>Reset</Button>
+          <Button variant="danger" onClick={() => simulate('error')}>
+            Simulate Error
+          </Button>
+          <Button variant="secondary" onClick={() => setStatus(null)}>
+            Reset
+          </Button>
         </div>
         <TransactionStatus status={status} onHide={() => setStatus(null)} />
       </div>

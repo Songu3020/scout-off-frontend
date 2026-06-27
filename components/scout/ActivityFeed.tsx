@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import api from '@/lib/api';
-import { useContractEvents, type FeedEvent as LiveFeedEvent } from '@/hooks/useContractEvents';
+import {
+  useContractEvents,
+  type FeedEvent as LiveFeedEvent,
+} from '@/hooks/useContractEvents';
 
 type EventType =
   | 'player_registered'
@@ -79,14 +82,18 @@ export default function ActivityFeed({ scoutId }: ActivityFeedProps) {
       const newIds = new Set(novel.map((e) => e.id));
       setFreshIds((ids) => new Set([...ids, ...newIds]));
       // Remove animation class after 2 s
-      setTimeout(() => setFreshIds((ids) => {
-        const next = new Set(ids);
-        newIds.forEach((id) => next.delete(id));
-        return next;
-      }), 2000);
+      setTimeout(
+        () =>
+          setFreshIds((ids) => {
+            const next = new Set(ids);
+            newIds.forEach((id) => next.delete(id));
+            return next;
+          }),
+        2000,
+      );
       return [...novel, ...base].slice(0, 20);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveEvents]);
 
   async function fetchEvents() {
@@ -163,7 +170,10 @@ export default function ActivityFeed({ scoutId }: ActivityFeedProps) {
                 ? ev.createdAt * 1000
                 : new Date(ev.createdAt).getTime();
             return (
-              <li key={ev.id} className={`py-3 flex items-start gap-3 transition-colors duration-700${freshIds.has(ev.id) ? ' bg-green-950/40' : ''}`}>
+              <li
+                key={ev.id}
+                className={`py-3 flex items-start gap-3 transition-colors duration-700${freshIds.has(ev.id) ? ' bg-green-950/40' : ''}`}
+              >
                 <div className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-gray-900 text-white text-sm">
                   {ICONS[ev.type] ?? 'ℹ️'}
                 </div>

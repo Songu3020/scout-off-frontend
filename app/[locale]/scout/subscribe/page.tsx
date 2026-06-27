@@ -58,10 +58,7 @@ function formatExpiry(timestamp: number) {
 }
 
 function remainingDays(expiresAt: number): number {
-  return Math.max(
-    0,
-    Math.ceil((expiresAt - Date.now() / 1000) / 86400),
-  );
+  return Math.max(0, Math.ceil((expiresAt - Date.now() / 1000) / 86400));
 }
 
 function SubscribeContent() {
@@ -99,14 +96,18 @@ function SubscribeContent() {
     return `Current subscription: ${subscription.tier.toUpperCase()} — active until ${formatExpiry(subscription.expiresAt)}.`;
   }, [subscription, isExpired, loading]);
 
-  function getCtaLabel(planTier: SubscriptionTier, isProcessing: boolean): string {
+  function getCtaLabel(
+    planTier: SubscriptionTier,
+    isProcessing: boolean,
+  ): string {
     if (isProcessing) return 'Processing…';
 
     if (!subscription || isExpired) {
       // Expired: same tier = Renew, higher tier = Upgrade, no sub = Subscribe
       if (subscription && isExpired) {
         if (planTier === subscription.tier) return 'Renew';
-        if (TIER_ORDER[planTier] > TIER_ORDER[subscription.tier]) return 'Upgrade';
+        if (TIER_ORDER[planTier] > TIER_ORDER[subscription.tier])
+          return 'Upgrade';
       }
       return 'Subscribe';
     }
