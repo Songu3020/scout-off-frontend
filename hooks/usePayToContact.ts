@@ -28,7 +28,7 @@ export function usePayToContact() {
       return t('SubscriptionExpired');
     }
     const key = extractContractErrorKey(errorText);
-    return key ? t(key) : (errorText || t('unknown'));
+    return key ? t(key) : errorText || t('unknown');
   }
 
   const unlock = useCallback(

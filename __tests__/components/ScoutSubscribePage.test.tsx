@@ -60,32 +60,42 @@ describe('ScoutSubscribePage', () => {
     it('renders banner when subscription is active', () => {
       activeSub('basic', FUTURE);
       render(<ScoutSubscribePage />);
-      expect(screen.getByRole('status', { name: /active subscription/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('status', { name: /active subscription/i }),
+      ).toBeInTheDocument();
     });
 
     it('does not render banner when no subscription', () => {
       noSub();
       render(<ScoutSubscribePage />);
-      expect(screen.queryByRole('status', { name: /active subscription/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('status', { name: /active subscription/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('does not render banner when subscription is expired', () => {
       expiredSub('basic');
       render(<ScoutSubscribePage />);
-      expect(screen.queryByRole('status', { name: /active subscription/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('status', { name: /active subscription/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('shows tier name in banner', () => {
       activeSub('pro', FUTURE);
       render(<ScoutSubscribePage />);
-      const banner = screen.getByRole('status', { name: /active subscription/i });
+      const banner = screen.getByRole('status', {
+        name: /active subscription/i,
+      });
       expect(banner).toHaveTextContent('pro');
     });
 
     it('shows remaining days in banner', () => {
       activeSub('basic', FUTURE);
       render(<ScoutSubscribePage />);
-      const banner = screen.getByRole('status', { name: /active subscription/i });
+      const banner = screen.getByRole('status', {
+        name: /active subscription/i,
+      });
       expect(banner).toHaveTextContent(/days remaining/i);
     });
   });
@@ -115,13 +125,17 @@ describe('ScoutSubscribePage', () => {
     it('shows "Renew" on the current active tier', () => {
       activeSub('basic', FUTURE);
       render(<ScoutSubscribePage />);
-      expect(screen.getByRole('button', { name: /renew/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /renew/i }),
+      ).toBeInTheDocument();
     });
 
     it('shows "Upgrade" on a higher tier when active subscription exists', () => {
       activeSub('basic', FUTURE);
       render(<ScoutSubscribePage />);
-      expect(screen.getByRole('button', { name: /upgrade/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /upgrade/i }),
+      ).toBeInTheDocument();
     });
 
     it('shows "Renew" on same expired tier', () => {
@@ -137,8 +151,12 @@ describe('ScoutSubscribePage', () => {
       // pro is active, basic is lower — should say Subscribe (no upgrade/renew)
       activeSub('pro', FUTURE);
       render(<ScoutSubscribePage />);
-      expect(screen.getByRole('button', { name: /subscribe/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /renew/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /subscribe/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /renew/i }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -188,7 +206,9 @@ describe('ScoutSubscribePage', () => {
       await userEvent.click(basicBtn);
 
       await waitFor(() =>
-        expect(screen.getByText(/subscribed to basic successfully/i)).toBeInTheDocument(),
+        expect(
+          screen.getByText(/subscribed to basic successfully/i),
+        ).toBeInTheDocument(),
       );
     });
   });

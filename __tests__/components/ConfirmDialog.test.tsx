@@ -24,7 +24,9 @@ describe('ConfirmDialog', () => {
   it('renders title, message, confirm, and cancel buttons when isOpen is true', () => {
     render(<ConfirmDialog {...defaultProps} />);
     expect(screen.getByText('Revoke Milestone')).toBeInTheDocument();
-    expect(screen.getByText('Are you sure you want to revoke this milestone?')).toBeInTheDocument();
+    expect(
+      screen.getByText('Are you sure you want to revoke this milestone?'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
@@ -62,9 +64,15 @@ describe('ConfirmDialog', () => {
 
   it('renders custom confirmLabel and cancelLabel', () => {
     render(
-      <ConfirmDialog {...defaultProps} confirmLabel="Yes, Revoke" cancelLabel="Keep It" />,
+      <ConfirmDialog
+        {...defaultProps}
+        confirmLabel="Yes, Revoke"
+        cancelLabel="Keep It"
+      />,
     );
-    expect(screen.getByRole('button', { name: 'Yes, Revoke' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Yes, Revoke' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Keep It' })).toBeInTheDocument();
   });
 });

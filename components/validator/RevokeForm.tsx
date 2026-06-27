@@ -80,9 +80,7 @@ export default function RevokeForm({ player, onSuccess }: Props) {
         </div>
       )}
       {/* Warning banner */}
-      <div
-        className="flex items-start gap-2 rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300"
-      >
+      <div className="flex items-start gap-2 rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300">
         <span aria-hidden>⚠️</span>
         <span>
           Revoking a milestone may reduce the player&apos;s progress level.
@@ -167,7 +165,7 @@ export default function RevokeForm({ player, onSuccess }: Props) {
         type="button"
         disabled={!selected || !walletAuthorized || loading || paused}
         onClick={() => setConfirmOpen(true)}
-        aria-describedby={(error || txError) ? 'revoke-error-summary' : undefined}
+        aria-describedby={error || txError ? 'revoke-error-summary' : undefined}
         title={paused ? 'Contract is currently paused' : undefined}
         className="self-start rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
       >

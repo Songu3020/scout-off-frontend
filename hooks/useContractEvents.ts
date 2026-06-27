@@ -66,7 +66,9 @@ async function fetchOperations(
   const json = await resp.json();
   const records: Record<string, unknown>[] = json?._embedded?.records ?? [];
   const nextCursor: string =
-    records.length > 0 ? String((records[0] as { paging_token?: unknown }).paging_token ?? '') : (cursor ?? '');
+    records.length > 0
+      ? String((records[0] as { paging_token?: unknown }).paging_token ?? '')
+      : (cursor ?? '');
   const events = records.flatMap((r) => {
     const ev = toFeedEvent(r);
     return ev ? [ev] : [];

@@ -11,7 +11,12 @@ interface QRModalProps {
   title?: string;
 }
 
-export default function QRModal({ isOpen, onClose, url, title = 'Share via QR' }: QRModalProps) {
+export default function QRModal({
+  isOpen,
+  onClose,
+  url,
+  title = 'Share via QR',
+}: QRModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

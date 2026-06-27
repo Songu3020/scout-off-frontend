@@ -46,17 +46,25 @@ describe('ScoutProfilePage', () => {
       contactedPlayers: [],
     });
 
-    const element = await ScoutProfilePage({ params: { locale: 'en', id: 'scout-1' } });
+    const element = await ScoutProfilePage({
+      params: { locale: 'en', id: 'scout-1' },
+    });
     render(<>{element}</>);
 
-    expect(screen.getByTestId('scout-profile-card')).toHaveTextContent('Scout One');
-    expect(screen.getByTestId('activity-feed')).toHaveTextContent('feed:scout-1');
+    expect(screen.getByTestId('scout-profile-card')).toHaveTextContent(
+      'Scout One',
+    );
+    expect(screen.getByTestId('activity-feed')).toHaveTextContent(
+      'feed:scout-1',
+    );
   });
 
   it('renders an EmptyState when the scout id is not found', async () => {
     mockFetchScoutProfile.mockRejectedValueOnce(new Error('Not found'));
 
-    const element = await ScoutProfilePage({ params: { locale: 'en', id: 'missing-scout' } });
+    const element = await ScoutProfilePage({
+      params: { locale: 'en', id: 'missing-scout' },
+    });
     render(<>{element}</>);
 
     expect(screen.getByText('Scout not found')).toBeInTheDocument();

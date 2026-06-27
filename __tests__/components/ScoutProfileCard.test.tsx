@@ -56,9 +56,7 @@ beforeEach(() => {
 
 describe('ScoutProfileCard', () => {
   it('is exported as a React.memo component', () => {
-    expect((ScoutProfileCard as any).$$typeof).toBe(
-      Symbol.for('react.memo'),
-    );
+    expect((ScoutProfileCard as any).$$typeof).toBe(Symbol.for('react.memo'));
   });
 
   it('renders scout name, organisation, and tier badge', () => {

@@ -87,7 +87,10 @@ describe('pollTransaction', () => {
   test('throws TransactionFailedError when status is FAILED', async () => {
     mockGetTransaction.mockResolvedValueOnce({ status: 'FAILED' });
 
-    const { pollTransaction, TransactionFailedError } = require('@/lib/stellar');
+    const {
+      pollTransaction,
+      TransactionFailedError,
+    } = require('@/lib/stellar');
     await expect(pollTransaction('abc123', 3, 0)).rejects.toThrow(
       TransactionFailedError,
     );
@@ -96,7 +99,10 @@ describe('pollTransaction', () => {
   test('throws TransactionTimeoutError after max attempts with only NOT_FOUND', async () => {
     mockGetTransaction.mockResolvedValue({ status: 'NOT_FOUND' });
 
-    const { pollTransaction, TransactionTimeoutError } = require('@/lib/stellar');
+    const {
+      pollTransaction,
+      TransactionTimeoutError,
+    } = require('@/lib/stellar');
     await expect(pollTransaction('abc123', 3, 0)).rejects.toThrow(
       TransactionTimeoutError,
     );

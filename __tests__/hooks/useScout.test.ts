@@ -53,7 +53,11 @@ describe('useScout — happy path', () => {
     expect(result.current.players).toEqual([]);
 
     act(() => {
-      result.current.search({ region: 'Europe', position: 'Forward', minLevel: 1 });
+      result.current.search({
+        region: 'Europe',
+        position: 'Forward',
+        minLevel: 1,
+      });
     });
 
     await act(async () => {
@@ -72,7 +76,10 @@ describe('useScout — loading state', () => {
   test('loading is true while the filter call is in-flight', async () => {
     let resolveFilter: (players: Player[]) => void = () => {};
     mockFilterPlayers.mockImplementation(
-      () => new Promise((resolve) => { resolveFilter = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveFilter = resolve;
+        }),
     );
 
     const { result } = renderHook(() => useScout(), { wrapper });
