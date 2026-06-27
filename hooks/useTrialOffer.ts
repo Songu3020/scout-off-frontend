@@ -1,61 +1,66 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useWallet } from '@/hooks/useWallet';
-import { logTrialOffer } from '@/lib/contract';
+import { buildLogTrialOffer } from '@/lib/contract';
+import { extractContractErrorKey } from '@/lib/contractErrorMessage';
+import type { TrialOfferDetails } from '@/types';
 
-export interface TrialOfferDetails {
-  description: string;
-  startDate: string;
-  location: string;
+export interface UseTrialOfferReturn {
+  logTrialOffer: (
+    playerId: string,
+    details: TrialOfferDetails,
+  ) => Promise<void>;
+  loading: boolean;
+  error: string | null;
+  txHash: string | null;
 }
 
-export function useTrialOffer() {
-  const { publicKey } = useWallet();
+export function useTrialOffer(): UseTrialOfferReturn {
+  const { publicKey, signAndSubmit } = useWallet();
+  const t = useTranslations('contractErrors');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  /**
-   * Map contract error codes to user-friendly messages.
-   */
-  function mapErrorMessage(errorText: string): string {
-    if (errorText.includes('code 9') || errorText.includes('ContractPaused')) {
-      return 'The contract is currently paused. Please try again later.';
-    }
-    if (errorText.includes('code 10') || errorText.includes('Unauthorized')) {
-      return 'You are not authorized to log trial offers. Ensure you have an active scout subscription.';
-    }
-    return errorText || 'An error occurred while logging the trial offer.';
-  }
+  // Monotonically-increasing counter. Each invocation captures its own id;
+  // if a newer call arrives before this one resolves, the stale response is
+  // silently discarded rather than overwriting the newer in-flight state.
+  const callIdRef = useRef(0);
 
-  const submit = useCallback(
+  const logTrialOffer = useCallback(
     async (playerId: string, details: TrialOfferDetails): Promise<void> => {
-      if (!publicKey) throw new Error('Wallet not connected');
+      const myCallId = ++callIdRef.current;
 
+      // Reset all state for this fresh invocation
       setLoading(true);
       setError(null);
       setTxHash(null);
 
       try {
-        // Serialize details to JSON string
-        const detailsJson = JSON.stringify(details);
+        if (!publicKey) throw new Error('Wallet not connected');
 
-        // Call the contract function
-        await logTrialOffer(publicKey, playerId, detailsJson);
+        const xdr = await buildLogTrialOffer(publicKey, playerId, details);
+        if (myCallId !== callIdRef.current) return;
 
-        // Note: We don't get txHash from logTrialOffer directly, but in real implementation
-        // the component would retrieve it from transaction history or events
-        setTxHash('submitted');
-      } catch (e: any) {
-        const friendlyError = mapErrorMessage(e.message);
-        setError(friendlyError);
-        throw e;
+        const result = await signAndSubmit(xdr);
+        if (myCallId !== callIdRef.current) return;
+
+        setTxHash((result as any)?.hash ?? null);
+      } catch (err) {
+        if (myCallId !== callIdRef.current) return;
+        const msg = err instanceof Error ? err.message : null;
+        const key = msg ? extractContractErrorKey(msg) : null;
+        setError(key ? t(key) : (msg ?? 'Transaction failed'));
       } finally {
-        setLoading(false);
+        // Only the most-recent call is allowed to flip loading back to false
+        if (myCallId === callIdRef.current) {
+          setLoading(false);
+        }
       }
     },
-    [publicKey],
+    [publicKey, signAndSubmit],
   );
 
-  return { submit, loading, error, txHash };
+  return { logTrialOffer, loading, error, txHash };
 }

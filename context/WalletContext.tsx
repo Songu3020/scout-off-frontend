@@ -5,11 +5,12 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
 } from 'react';
+import { mutate } from 'swr';
 import albedo from '@albedo-link/intent';
-import { TransactionBuilder } from '@stellar/stellar-sdk';
-import { rpc, NETWORK } from '@/lib/stellar';
+import { NETWORK } from '@/lib/stellar';
 
 // ── Wallet provider types ─────────────────────────────────────────────────────
 
@@ -27,6 +28,13 @@ export const WALLET_PROVIDERS: WalletProviderInfo[] = [
   { provider: 'albedo', label: 'Albedo', icon: '✨' },
   { provider: 'lobstr', label: 'LOBSTR', icon: '🌐' },
 ];
+
+/** Official install page for each wallet provider, used by the "Install" prompt. */
+export const WALLET_INSTALL_URLS: Record<WalletProvider, string> = {
+  freighter: 'https://freighter.app',
+  albedo: 'https://albedo.link',
+  lobstr: 'https://lobstr.co',
+};
 
 interface WalletAdapter {
   isInstalled: () => Promise<boolean>;
@@ -113,6 +121,17 @@ const ADAPTERS: Record<WalletProvider, WalletAdapter> = {
   },
 };
 
+/** Checks whether a given wallet provider's extension/app is installed. */
+export async function isWalletInstalled(
+  provider: WalletProvider,
+): Promise<boolean> {
+  try {
+    return await ADAPTERS[provider].isInstalled();
+  } catch {
+    return false;
+  }
+}
+
 const PROVIDER_STORAGE_KEY = 'scoutoff_wallet_provider';
 
 /** Returns the adapter for the currently persisted provider, or null. */
@@ -146,7 +165,10 @@ interface WalletContextValue {
   publicKey: string | null;
   isAuthenticated: boolean;
   isConnecting: boolean;
+  connectingProvider: WalletProvider | null;
+  isRestoringSession: boolean;
   xlmBalance: string | null;
+  balanceError: string | null;
   isLoadingBalance: boolean;
   walletProvider: WalletProvider | null;
   walletProviderInfo: WalletProviderInfo | null;
@@ -156,7 +178,7 @@ interface WalletContextValue {
   connectWithProvider: (provider: WalletProvider) => Promise<void>;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
-  signAndSubmit: (xdr: string) => Promise<unknown>;
+  signAndSubmit: (xdr: string) => Promise<string>;
   refreshBalance: () => Promise<void>;
 }
 
@@ -165,31 +187,32 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 const HORIZON_URL =
   process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org';
 
-/** Fetch the native XLM balance for a Stellar account via Horizon.
- *  Returns "0.00" for unfunded (404) accounts, null on other errors. */
-async function fetchXlmBalance(address: string): Promise<string> {
-  try {
-    const res = await fetch(`${HORIZON_URL}/accounts/${address}`);
-    if (res.status === 404) {
-      return '0.00';
-    }
-    if (!res.ok) throw new Error(`Horizon error: ${res.status}`);
-    const data = await res.json();
-    const native = (
-      data.balances as Array<{ asset_type: string; balance: string }>
-    ).find((b) => b.asset_type === 'native');
-    const raw = native ? parseFloat(native.balance) : 0;
-    return raw.toFixed(2);
-  } catch {
-    return '0.00';
-  }
+/**
+ * Fetch the native XLM balance for a Stellar account via Horizon.
+ * Returns "0.00" for unfunded (404) accounts.
+ * Returns null on network/server errors so callers can surface an error indicator.
+ */
+async function fetchXlmBalance(address: string): Promise<string | null> {
+  const res = await fetch(`${HORIZON_URL}/accounts/${address}`);
+  if (res.status === 404) return '0.00';
+  if (!res.ok) throw new Error(`Horizon error: ${res.status}`);
+  const data = await res.json();
+  const native = (
+    data.balances as Array<{ asset_type: string; balance: string }>
+  ).find((b) => b.asset_type === 'native');
+  const raw = native ? parseFloat(native.balance) : 0;
+  return raw.toFixed(2);
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectingProvider, setConnectingProvider] =
+    useState<WalletProvider | null>(null);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [xlmBalance, setXlmBalance] = useState<string | null>(null);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [walletProvider, setWalletProvider] = useState<WalletProvider | null>(
     null,
@@ -203,9 +226,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   /** Fetch and store the XLM balance for the given address. */
   const loadBalance = useCallback(async (address: string) => {
     setIsLoadingBalance(true);
+    setBalanceError(null);
     try {
       const balance = await fetchXlmBalance(address);
       setXlmBalance(balance);
+    } catch (err: unknown) {
+      setXlmBalance(null);
+      setBalanceError(
+        err instanceof Error ? err.message : 'Failed to load balance',
+      );
     } finally {
       setIsLoadingBalance(false);
     }
@@ -229,6 +258,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         // Silently fail session restore
+      } finally {
+        setIsRestoringSession(false);
       }
     }
     restoreSession();
@@ -249,6 +280,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     async (provider: WalletProvider) => {
       const adapter = ADAPTERS[provider];
       setIsConnecting(true);
+      setConnectingProvider(provider);
       try {
         if (!(await adapter.isInstalled())) {
           throw new Error(`${provider} is not installed`);
@@ -285,6 +317,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         throw error;
       } finally {
         setIsConnecting(false);
+        setConnectingProvider(null);
       }
     },
     [loadBalance],
@@ -317,45 +350,70 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setPublicKey(null);
       setIsAuthenticated(false);
       setXlmBalance(null);
+      setBalanceError(null);
       setWalletProvider(null);
       removeStoredProvider();
+      // Clear all SWR caches so stale data from the previous session isn't
+      // shown briefly if a different wallet connects immediately after.
+      mutate(() => true, undefined, { revalidate: false });
     }
   }, []);
 
   const signAndSubmit = useCallback(
-    async (xdr: string) => {
+    async (xdr: string): Promise<string> => {
       if (!publicKey) throw new Error('Wallet not connected');
       if (!walletProvider) throw new Error('No wallet provider selected');
       const adapter = ADAPTERS[walletProvider];
-      const signed = await adapter.signTransaction(xdr);
-      const tx = TransactionBuilder.fromXDR(signed, NETWORK);
-      return rpc.sendTransaction(tx);
+      return adapter.signTransaction(xdr);
     },
     [publicKey, walletProvider],
   );
 
+  const value = useMemo(
+    () => ({
+      publicKey,
+      isAuthenticated,
+      isConnecting,
+      connectingProvider,
+      isRestoringSession,
+      xlmBalance,
+      balanceError,
+      isLoadingBalance,
+      walletProvider,
+      walletProviderInfo,
+      showWalletModal,
+      openWalletModal,
+      closeWalletModal,
+      connectWithProvider,
+      connect,
+      disconnect,
+      signAndSubmit,
+      refreshBalance,
+    }),
+    [
+      publicKey,
+      isAuthenticated,
+      isConnecting,
+      connectingProvider,
+      isRestoringSession,
+      xlmBalance,
+      balanceError,
+      isLoadingBalance,
+      walletProvider,
+      walletProviderInfo,
+      showWalletModal,
+      openWalletModal,
+      closeWalletModal,
+      connectWithProvider,
+      connect,
+      disconnect,
+      signAndSubmit,
+      refreshBalance,
+    ],
+  );
+
   return (
-    <WalletContext.Provider
-      value={{
-        publicKey,
-        isAuthenticated,
-        isConnecting,
-        xlmBalance,
-        isLoadingBalance,
-        walletProvider,
-        walletProviderInfo,
-        showWalletModal,
-        openWalletModal,
-        closeWalletModal,
-        connectWithProvider,
-        connect,
-        disconnect,
-        signAndSubmit,
-        refreshBalance,
-      }}
-    >
-      {children}
-    </WalletContext.Provider>
+    <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
   );
 }
 

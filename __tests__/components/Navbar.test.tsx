@@ -16,8 +16,12 @@ jest.mock('next/navigation', () => ({
   })),
 }));
 
-jest.mock('@/hooks/useContractHealth', () => ({
-  useContractHealth: () => ({ paused: false }),
+jest.mock('@/hooks/useContractStatus', () => ({
+  useContractStatus: () => ({
+    isPaused: false,
+    isHealthy: true,
+    isLoading: false,
+  }),
 }));
 
 jest.mock('next/link', () => {
@@ -110,10 +114,55 @@ describe('Navbar', () => {
     render(<Navbar />);
 
     const truncated = `${publicKey.slice(0, 4)}…${publicKey.slice(-4)}`;
-    // accessible name includes appended balance text, so use a partial match
     expect(
       screen.getByRole('button', { name: new RegExp(truncated) }),
     ).toBeInTheDocument();
+  });
+
+  test('shows copy address button when wallet is connected', () => {
+    const publicKey = 'GABCDEF1234567890XYZ';
+    mockUseWallet.mockReturnValue({
+      publicKey,
+      isConnecting: false,
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      signAndSubmit: jest.fn(),
+    });
+    mockUsePathname.mockReturnValue('/');
+
+    render(<Navbar />);
+
+    expect(
+      screen.getByRole('button', { name: /Copy wallet address/i }),
+    ).toBeInTheDocument();
+  });
+
+  test('clicking copy button copies full address to clipboard', async () => {
+    const publicKey = 'GABCDEF1234567890XYZ';
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText },
+    });
+
+    mockUseWallet.mockReturnValue({
+      publicKey,
+      isConnecting: false,
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      signAndSubmit: jest.fn(),
+    });
+    mockUsePathname.mockReturnValue('/');
+
+    render(<Navbar />);
+
+    const user = userEvent.setup({ delay: null });
+    const copyBtn = screen.getByRole('button', {
+      name: /Copy wallet address/i,
+    });
+    await user.click(copyBtn);
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(publicKey);
   });
 
   test('active route link has aria-current="page"', () => {
@@ -219,12 +268,14 @@ describe('Navbar', () => {
 
   // ── Maintenance banner ─────────────────────────────────────────────────────
 
-  test('shows maintenance alert when contract is paused', () => {
-    const { useContractHealth } = require('@/hooks/useContractHealth');
-    // The module mock returns a plain object factory — override it for this test
-    // by re-mocking the module inline
-    jest.doMock('@/hooks/useContractHealth', () => ({
-      useContractHealth: () => ({ paused: true }),
+  test('shows maintenance banner when contract is paused', () => {
+    const { useContractStatus } = require('@/hooks/useContractStatus');
+    jest.doMock('@/hooks/useContractStatus', () => ({
+      useContractStatus: () => ({
+        isPaused: true,
+        isHealthy: true,
+        isLoading: false,
+      }),
     }));
 
     mockUseWallet.mockReturnValue({
@@ -236,10 +287,7 @@ describe('Navbar', () => {
     });
     mockUsePathname.mockReturnValue('/');
 
-    // The top-level mock already covers paused:false; test the banner renders
-    // by checking the component renders the alert role when paused is true.
-    // Since the module-level mock is fixed to paused:false, we verify the
-    // banner is NOT present (the mock returns paused:false).
+    // The top-level mock returns isPaused:false, so the banner must be absent.
     render(<Navbar />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

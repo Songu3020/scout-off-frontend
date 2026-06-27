@@ -1,8 +1,6 @@
-'use client';
-import React from 'react';
 import { renderHook, act } from '@testing-library/react';
+import React from 'react';
 import { SWRConfig } from 'swr';
-import { useScout } from '@/hooks/useScout';
 import type { Player } from '@/types';
 
 jest.mock('@/lib/contract', () => ({
@@ -10,90 +8,119 @@ jest.mock('@/lib/contract', () => ({
 }));
 
 import { filterPlayers } from '@/lib/contract';
+import { useScout } from '@/hooks/useScout';
 
 const mockFilterPlayers = filterPlayers as jest.Mock;
 
-const wrapper = ({ children }: { children: React.ReactNode }) =>
-  React.createElement(SWRConfig, {
-    value: {
-      provider: () => new Map(),
-      dedupingInterval: 0,
-      onErrorRetry: () => {},
-    },
+// Fresh, unshared SWR cache per test and no background retries, so
+// failures/successes are observable deterministically.
+function wrapper({ children }: { children: React.ReactNode }) {
+  return React.createElement(
+    SWRConfig,
+    { value: { provider: () => new Map(), shouldRetryOnError: false } },
     children,
-  });
+  );
+}
 
-const mockPlayer: Player = {
-  id: 'player-1',
-  wallet: 'GABC123',
-  vitals: {
-    name: 'Alice',
-    age: 22,
-    position: 'FW',
-    region: 'EU',
-    nationality: 'DE',
+const PLAYERS: Player[] = [
+  {
+    id: 'player-1',
+    wallet: 'GCFW7QAO3WZQ6X4CZ3OYZFXX3A3DL7XVI5DNVTXA5VJUGE5SU6ZRG5OV',
+    vitals: {
+      name: 'Ava Rodriguez',
+      age: 21,
+      position: 'Forward',
+      region: 'Europe',
+      nationality: 'Spain',
+    },
+    ipfsHash: 'QmHash',
+    progressLevel: 1,
+    milestones: [],
+    createdAt: 0,
   },
-  ipfsHash: 'QmTestHash',
-  progressLevel: 1,
-  milestones: [],
-  createdAt: 1_000_000,
-};
+];
 
-describe('useScout', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
+beforeEach(() => {
+  jest.resetAllMocks();
+});
 
-  test('filter call returns player list on success', async () => {
-    mockFilterPlayers.mockResolvedValue([mockPlayer]);
+describe('useScout — happy path', () => {
+  test('search resolves to the filtered player list', async () => {
+    mockFilterPlayers.mockResolvedValue(PLAYERS);
 
     const { result } = renderHook(() => useScout(), { wrapper });
 
-    await act(async () => {
-      result.current.search({ region: 'EU', position: 'FW', minLevel: 1 });
-      await new Promise((r) => setTimeout(r, 0));
+    expect(result.current.players).toEqual([]);
+
+    act(() => {
+      result.current.search({
+        region: 'Europe',
+        position: 'Forward',
+        minLevel: 1,
+      });
     });
 
-    expect(mockFilterPlayers).toHaveBeenCalledWith('EU', 'FW', 1);
-    expect(result.current.players).toEqual([mockPlayer]);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockFilterPlayers).toHaveBeenCalledWith('Europe', 'Forward', 1);
+    expect(result.current.players).toEqual(PLAYERS);
     expect(result.current.error).toBeNull();
     expect(result.current.loading).toBe(false);
   });
+});
 
-  test('loading is true while fetch is in-flight', async () => {
-    let resolveFilter!: (value: Player[]) => void;
-    const pending = new Promise<Player[]>((res) => {
-      resolveFilter = res;
-    });
-    mockFilterPlayers.mockReturnValue(pending);
+describe('useScout — loading state', () => {
+  test('loading is true while the filter call is in-flight', async () => {
+    let resolveFilter: (players: Player[]) => void = () => {};
+    mockFilterPlayers.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFilter = resolve;
+        }),
+    );
 
     const { result } = renderHook(() => useScout(), { wrapper });
 
     act(() => {
-      result.current.search({ region: 'EU', position: 'FW', minLevel: 0 });
+      result.current.search({ region: '', position: '', minLevel: 0 });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
     });
 
     expect(result.current.loading).toBe(true);
 
     await act(async () => {
       resolveFilter([]);
-      await new Promise((r) => setTimeout(r, 0));
+      await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(result.current.loading).toBe(false);
   });
+});
 
-  test('error is set on contract call failure', async () => {
-    mockFilterPlayers.mockRejectedValue(new Error('RPC connection failed'));
+describe('useScout — error state', () => {
+  test('error state is set on contract call failure', async () => {
+    mockFilterPlayers.mockRejectedValue(new Error('ContractPaused'));
 
     const { result } = renderHook(() => useScout(), { wrapper });
 
-    await act(async () => {
-      result.current.search({ region: 'EU', position: 'FW', minLevel: 0 });
-      await new Promise((r) => setTimeout(r, 0));
+    act(() => {
+      result.current.search({ region: '', position: '', minLevel: 0 });
     });
 
-    expect(result.current.error).toBe('RPC connection failed');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.error).toBe('ContractPaused');
     expect(result.current.players).toEqual([]);
+    expect(result.current.loading).toBe(false);
   });
 });

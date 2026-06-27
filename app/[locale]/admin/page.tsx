@@ -4,6 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import EmptyState from '@/components/ui/EmptyState';
+import TransactionStatus from '@/components/ui/TransactionStatus';
+import type { TxStatus } from '@/components/ui/TransactionStatus';
 import {
   getValidators,
   buildAddValidator,
@@ -14,13 +18,28 @@ import {
   buildUnpauseContract,
   getContractPaused,
 } from '@/lib/contract';
+import {
+  fetchActivityEvents,
+  type ActivityEvent,
+  type ActivityEventType,
+} from '@/lib/api';
 import type { ValidatorInfo } from '@/types';
 
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS;
+const ACTIVITY_PAGE_SIZE = 20;
+
+const EVENT_LABELS: Record<ActivityEventType, string> = {
+  player_registered: 'Player Registered',
+  milestone_approved: 'Milestone Approved',
+  milestone_revoked: 'Milestone Revoked',
+  scout_subscribed: 'Scout Subscribed',
+  player_contacted: 'Player Contacted',
+  fees_withdrawn: 'Fees Withdrawn',
+};
 
 type DialogAction = 'add' | 'remove' | 'withdraw' | 'pause' | 'unpause' | null;
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const { publicKey, signAndSubmit } = useWallet();
   const router = useRouter();
   const { show } = useToast();
@@ -33,6 +52,16 @@ export default function AdminDashboard() {
 
   const [validatorInput, setValidatorInput] = useState('');
   const [removeTarget, setRemoveTarget] = useState('');
+
+  const [withdrawTxStatus, setWithdrawTxStatus] = useState<TxStatus | null>(
+    null,
+  );
+  const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
+
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   const [dialog, setDialog] = useState<{
     action: DialogAction;
@@ -66,6 +95,20 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false));
   }, [publicKey, show]);
 
+  useEffect(() => {
+    if (publicKey !== ADMIN_ADDRESS) return;
+    setActivityLoading(true);
+    fetchActivityEvents(activityPage, ACTIVITY_PAGE_SIZE)
+      .then(({ events, total }) => {
+        setActivity(events);
+        setActivityTotal(total);
+      })
+      .catch(() =>
+        show({ message: 'Failed to load activity.', variant: 'error' }),
+      )
+      .finally(() => setActivityLoading(false));
+  }, [publicKey, activityPage, show]);
+
   async function execAction(action: DialogAction) {
     if (!publicKey) return;
     setActionLoading(true);
@@ -92,9 +135,12 @@ export default function AdminDashboard() {
         show({ message: 'Validator removed.', variant: 'success' });
       } else if (action === 'withdraw') {
         xdr = await buildWithdrawFees(publicKey);
-        await signAndSubmit(xdr);
-        setFees(0);
-        show({ message: 'Fees withdrawn.', variant: 'success' });
+        setWithdrawTxStatus('pending');
+        const result = await signAndSubmit(xdr);
+        setWithdrawTxHash((result as any)?.hash ?? null);
+        setWithdrawTxStatus('success');
+        const updatedFees = await getPlatformFees();
+        setFees(updatedFees as number);
       } else if (action === 'pause') {
         xdr = await buildPauseContract(publicKey);
         await signAndSubmit(xdr);
@@ -107,6 +153,7 @@ export default function AdminDashboard() {
         show({ message: 'Contract unpaused.', variant: 'success' });
       }
     } catch (e: any) {
+      if (action === 'withdraw') setWithdrawTxStatus('error');
       show({ message: e.message ?? 'Transaction failed.', variant: 'error' });
     } finally {
       setActionLoading(false);
@@ -117,6 +164,8 @@ export default function AdminDashboard() {
   if (!publicKey || publicKey !== ADMIN_ADDRESS) return null;
   if (loading)
     return <p className="text-center text-gray-400 mt-20">Loading…</p>;
+
+  const activityTotalPages = Math.ceil(activityTotal / ACTIVITY_PAGE_SIZE);
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-8">
@@ -168,7 +217,7 @@ export default function AdminDashboard() {
           <span className="text-white font-medium">{fees ?? 0} XLM</span>
         </p>
         <button
-          disabled={!fees || fees <= 0}
+          disabled={!fees || fees <= 0 || paused}
           onClick={() =>
             setDialog({
               action: 'withdraw',
@@ -176,10 +225,19 @@ export default function AdminDashboard() {
               message: `Withdraw ${fees} XLM to your wallet?`,
             })
           }
+          title={paused ? 'Contract is currently paused' : undefined}
           className="w-fit px-5 py-2 rounded-lg bg-brand-green text-black font-semibold hover:opacity-90 transition disabled:opacity-40"
         >
           Withdraw Fees
         </button>
+        <TransactionStatus
+          status={withdrawTxStatus}
+          txHash={withdrawTxHash}
+          onHide={() => {
+            setWithdrawTxStatus(null);
+            setWithdrawTxHash(null);
+          }}
+        />
       </section>
 
       {/* Add Validator */}
@@ -194,7 +252,9 @@ export default function AdminDashboard() {
           />
           <button
             disabled={
-              !validatorInput.startsWith('G') || validatorInput.length !== 56
+              !validatorInput.startsWith('G') ||
+              validatorInput.length !== 56 ||
+              paused
             }
             onClick={() =>
               setDialog({
@@ -203,6 +263,7 @@ export default function AdminDashboard() {
                 message: `Add ${validatorInput} as a validator?`,
               })
             }
+            title={paused ? 'Contract is currently paused' : undefined}
             className="px-5 py-2 rounded-lg bg-brand-green text-black font-semibold hover:opacity-90 transition disabled:opacity-40"
           >
             Add
@@ -228,6 +289,7 @@ export default function AdminDashboard() {
                   {v.address}
                 </span>
                 <button
+                  disabled={paused}
                   onClick={() => {
                     setRemoveTarget(v.address);
                     setDialog({
@@ -236,13 +298,76 @@ export default function AdminDashboard() {
                       message: `Remove ${v.address.slice(0, 8)}… from validators?`,
                     });
                   }}
-                  className="text-red-400 hover:text-red-300 transition shrink-0"
+                  title={paused ? 'Contract is currently paused' : undefined}
+                  className="text-red-400 hover:text-red-300 transition shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Remove
                 </button>
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* Activity Feed */}
+      <section className="bg-brand-card border border-gray-800 rounded-xl p-6 flex flex-col gap-4">
+        <h2 className="text-lg font-semibold text-white">Activity</h2>
+        {activityLoading ? (
+          <p className="text-sm text-gray-400">Loading…</p>
+        ) : activity.length === 0 ? (
+          <EmptyState
+            title="No activity yet"
+            description="Contract events will appear here once transactions are recorded."
+          />
+        ) : (
+          <>
+            <ul className="flex flex-col divide-y divide-gray-800">
+              {activity.map((event) => (
+                <li
+                  key={event.id}
+                  className="flex items-center gap-4 py-3 text-sm first:pt-0 last:pb-0"
+                >
+                  <span className="text-gray-200 shrink-0">
+                    {EVENT_LABELS[event.type]}
+                  </span>
+                  <span className="font-mono text-gray-500 truncate">
+                    {event.actor.slice(0, 8)}…
+                  </span>
+                  {event.subjectId && (
+                    <span className="font-mono text-gray-500 truncate">
+                      {event.subjectId.slice(0, 8)}…
+                    </span>
+                  )}
+                  <span className="text-gray-500 shrink-0 ml-auto">
+                    {new Date(event.timestamp * 1000).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {activityTotal > ACTIVITY_PAGE_SIZE && (
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                  disabled={activityPage <= 1}
+                  className="px-4 py-2 rounded-lg border border-gray-700 text-gray-300 disabled:opacity-40 hover:border-brand-green transition"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-400">
+                  Page {activityPage} of {activityTotalPages}
+                </span>
+                <button
+                  onClick={() =>
+                    setActivityPage((p) => Math.min(activityTotalPages, p + 1))
+                  }
+                  disabled={activityPage >= activityTotalPages}
+                  className="px-4 py-2 rounded-lg border border-gray-700 text-gray-300 disabled:opacity-40 hover:border-brand-green transition"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -258,5 +383,13 @@ export default function AdminDashboard() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <ErrorBoundary>
+      <AdminDashboardContent />
+    </ErrorBoundary>
   );
 }

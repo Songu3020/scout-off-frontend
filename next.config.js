@@ -51,7 +51,27 @@ const nextConfig = {
   images: {
     domains: ['ipfs.io', 'gateway.pinata.cloud'],
   },
+  webpack(config, { isServer }) {
+    // @sentry/nextjs is an optional peer dep used only in production.
+    // Mark it as external so webpack doesn't try to bundle it when the
+    // package isn't installed locally (e.g. CI / contributor machines).
+    config.externals = [
+      ...(Array.isArray(config.externals)
+        ? config.externals
+        : config.externals
+          ? [config.externals]
+          : []),
+      ({ request }, callback) => {
+        if (request === '@sentry/nextjs')
+          return callback(null, 'commonjs @sentry/nextjs');
+        callback();
+      },
+    ];
+    return config;
+  },
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
+
     // Get environment variables with defaults for development
     const ipfsGateway =
       process.env.NEXT_PUBLIC_IPFS_GATEWAY ||
@@ -76,10 +96,16 @@ const nextConfig = {
     const sorobanDomain = extractDomain(sorobanRpc);
     const horizonDomain = extractDomain(horizonUrl);
 
+    // Next.js dev tooling (react-refresh/runtime overlays) relies on inline
+    // scripts and eval. Keep production CSP strict.
+    const scriptSrc = isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self'";
+
     // Build Content Security Policy header
     const cspHeader = [
       "default-src 'self'",
-      "script-src 'self'",
+      scriptSrc,
       `img-src 'self' ${ipfsGatewayDomain}`,
       `connect-src 'self' ${sorobanDomain} ${horizonDomain}`,
       "style-src 'self' 'unsafe-inline'",
@@ -121,4 +147,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+module.exports = withNextIntl(withPWA(nextConfig));

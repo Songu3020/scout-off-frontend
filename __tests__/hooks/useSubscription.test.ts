@@ -11,15 +11,18 @@ jest.mock('@/hooks/useWallet', () => ({
 // Mock lib/contract
 jest.mock('@/lib/contract', () => ({
   getSubscription: jest.fn(),
-  buildSubscribe: jest.fn(),
+  subscribe: jest.fn(),
 }));
 
 import { useWallet } from '@/hooks/useWallet';
-import { getSubscription, buildSubscribe } from '@/lib/contract';
+import {
+  getSubscription,
+  subscribe as contractSubscribe,
+} from '@/lib/contract';
 
 const mockUseWallet = useWallet as jest.Mock;
 const mockGetSubscription = getSubscription as jest.Mock;
-const mockBuildSubscribe = buildSubscribe as jest.Mock;
+const mockSubscribe = contractSubscribe as jest.Mock;
 
 describe('useSubscription', () => {
   beforeEach(() => {
@@ -28,16 +31,12 @@ describe('useSubscription', () => {
 
   test('isExpired is true when expiresAt is in the past', async () => {
     const mockPublicKey = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-    const mockSignAndSubmit = jest.fn();
-    mockUseWallet.mockReturnValue({
-      publicKey: mockPublicKey,
-      signAndSubmit: mockSignAndSubmit,
-    });
+    mockUseWallet.mockReturnValue({ publicKey: mockPublicKey });
 
     const mockSubscription = {
       scout: mockPublicKey,
       tier: 'basic',
-      expiresAt: Date.now() / 1000 - 1000, // 1000 seconds in past
+      expiresAt: Date.now() / 1000 - 1000,
     };
     mockGetSubscription.mockResolvedValue(mockSubscription);
 
@@ -52,16 +51,12 @@ describe('useSubscription', () => {
 
   test('isExpired is false when expiresAt is in the future', async () => {
     const mockPublicKey = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-    const mockSignAndSubmit = jest.fn();
-    mockUseWallet.mockReturnValue({
-      publicKey: mockPublicKey,
-      signAndSubmit: mockSignAndSubmit,
-    });
+    mockUseWallet.mockReturnValue({ publicKey: mockPublicKey });
 
     const mockSubscription = {
       scout: mockPublicKey,
       tier: 'basic',
-      expiresAt: Date.now() / 1000 + 1000, // 1000 seconds in future
+      expiresAt: Date.now() / 1000 + 1000,
     };
     mockGetSubscription.mockResolvedValue(mockSubscription);
 
@@ -74,7 +69,7 @@ describe('useSubscription', () => {
     expect(result.current.isExpired).toBe(false);
   });
 
-  test('subscribe(tier) calls buildSubscribe, signAndSubmit, and fetchSubscription', async () => {
+  test('subscribe(tier) calls subscribe from contract then fetchSubscription', async () => {
     const mockPublicKey = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
     const mockSignAndSubmit = jest.fn();
     mockUseWallet.mockReturnValue({
@@ -82,13 +77,12 @@ describe('useSubscription', () => {
       signAndSubmit: mockSignAndSubmit,
     });
 
-    const mockXdr = 'AAAAA...';
     const mockSubscription = {
       scout: mockPublicKey,
       tier: 'pro',
       expiresAt: Date.now() / 1000 + 1000,
     };
-    mockBuildSubscribe.mockResolvedValue(mockXdr);
+    mockSubscribe.mockResolvedValue(undefined);
     mockGetSubscription.mockResolvedValue(mockSubscription);
 
     const { result } = renderHook(() => useSubscription());
@@ -101,22 +95,19 @@ describe('useSubscription', () => {
       await result.current.subscribe('pro');
     });
 
-    expect(mockBuildSubscribe).toHaveBeenCalledWith(mockPublicKey, 'pro');
-    expect(mockSignAndSubmit).toHaveBeenCalledWith(mockXdr);
+    expect(mockSubscribe).toHaveBeenCalledWith(
+      mockPublicKey,
+      'pro',
+      mockSignAndSubmit,
+    );
     expect(mockGetSubscription).toHaveBeenCalledTimes(2);
   });
 
   test('InsufficientFee error is surfaced in the error state', async () => {
     const mockPublicKey = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-    const mockSignAndSubmit = jest
-      .fn()
-      .mockRejectedValue(new Error('InsufficientFee'));
-    mockUseWallet.mockReturnValue({
-      publicKey: mockPublicKey,
-      signAndSubmit: mockSignAndSubmit,
-    });
+    mockUseWallet.mockReturnValue({ publicKey: mockPublicKey });
 
-    mockBuildSubscribe.mockResolvedValue('AAAAA...');
+    mockSubscribe.mockRejectedValue(new Error('InsufficientFee'));
     mockGetSubscription.mockResolvedValue(null);
 
     const { result } = renderHook(() => useSubscription());
@@ -125,16 +116,17 @@ describe('useSubscription', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    let caughtError: Error | null = null;
+    let caughtError: unknown;
     await act(async () => {
       try {
         await result.current.subscribe('basic');
       } catch (e) {
-        caughtError = e as Error;
+        caughtError = e;
       }
     });
 
-    expect(caughtError?.message).toBe('InsufficientFee');
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toBe('InsufficientFee');
     expect(result.current.error).toBe('InsufficientFee');
   });
 });

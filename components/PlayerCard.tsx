@@ -1,9 +1,13 @@
-import { memo, useCallback } from 'react';
+'use client';
+import { memo, useCallback, useEffect, useRef } from 'react';
+import useSWR from 'swr';
+import { getMilestoneHistory } from '@/lib/contract';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { mutate } from 'swr';
 import type { Player, ProgressLevel } from '@/types';
-import { PROGRESS_LABELS } from '@/types';
+import { getProgressLabel } from '@/lib/progress';
 import ProgressBar from './ProgressBar';
 import Badge from '@/components/ui/Badge';
 
@@ -17,13 +21,66 @@ const LEVEL_VARIANT: Record<
   3: 'level3',
 };
 
+const PREFETCH_DELAY_MS = 200;
+
 function PlayerCard({ player }: { player: Player }) {
+  const { id } = player;
+  const {
+    data: milestones,
+    error: milestonesError,
+    isLoading: milestonesLoading,
+  } = useSWR(`milestones:${id}`, () => getMilestoneHistory(id), {
+    revalidateOnFocus: false,
+  });
+  const milestoneCount = milestones ? milestones.length : 0;
   const { id, vitals, progressLevel, ipfsHash } = player;
   const router = useRouter();
 
   const href = `/player/${id}`;
-  const levelLabel = PROGRESS_LABELS[progressLevel];
+  const cacheKey = `player:${id}`;
+  const levelLabel = getProgressLabel(progressLevel);
   const cardLabel = `${vitals.name}, ${vitals.position}, Level ${progressLevel} – ${levelLabel}`;
+
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Prefetch the route and prime the SWR cache. The updater function only
+  // writes if the key has no existing entry, so fresher data is never clobbered.
+  const triggerPrefetch = useCallback(() => {
+    router.prefetch(href);
+    mutate(
+      cacheKey,
+      (existing: Player | null | undefined) => existing ?? player,
+      { revalidate: false },
+    );
+  }, [router, href, cacheKey, player]);
+
+  // Debounced: schedule prefetch 200ms after the pointer enters. Brief or
+  // accidental cursor movements cancel before the timer fires.
+  const handleMouseEnter = useCallback(() => {
+    if (prefetchTimerRef.current !== null) {
+      clearTimeout(prefetchTimerRef.current);
+    }
+    prefetchTimerRef.current = setTimeout(() => {
+      triggerPrefetch();
+      prefetchTimerRef.current = null;
+    }, PREFETCH_DELAY_MS);
+  }, [triggerPrefetch]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (prefetchTimerRef.current !== null) {
+      clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = null;
+    }
+  }, []);
+
+  // Clear any pending timer on unmount to avoid post-unmount state updates.
+  useEffect(() => {
+    return () => {
+      if (prefetchTimerRef.current !== null) {
+        clearTimeout(prefetchTimerRef.current);
+      }
+    };
+  }, []);
 
   const navigate = useCallback(() => {
     router.push(href);
@@ -46,6 +103,9 @@ function PlayerCard({ player }: { player: Player }) {
       tabIndex={0}
       onClick={navigate}
       onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={triggerPrefetch}
       className="bg-brand-card border border-gray-800 rounded-xl p-5 flex flex-col gap-4 hover:border-brand-green transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-black"
     >
       {/* Avatar */}
@@ -77,6 +137,17 @@ function PlayerCard({ player }: { player: Player }) {
           size="sm"
           className="mt-1"
         />
+        {/* Milestone count badge */}
+        {milestonesLoading ? (
+          <span className="inline-block h-4 w-12 bg-gray-600 rounded animate-pulse mt-1" />
+        ) : (
+          <Badge
+            variant="region"
+            label={`${milestoneCount} milestones`}
+            size="sm"
+            className="mt-1"
+          />
+        )}
       </div>
 
       <ProgressBar level={progressLevel} />
