@@ -22,7 +22,8 @@ jest.mock('next-intl', () => ({
       install: 'Browser extension',
       installMobile: 'Browser extension / mobile',
       cancel: 'Cancel',
-      noWalletDetected: 'No wallet detected. Please install a Stellar wallet extension.',
+      noWalletDetected:
+        'No wallet detected. Please install a Stellar wallet extension.',
     };
     return t[key] ?? key;
   },

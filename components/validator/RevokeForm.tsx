@@ -1,152 +1,115 @@
-'use client';
-import { useState, useRef, useEffect } from 'react';
-import { useWallet } from '@/hooks/useWallet';
-import useIsPaused from '@/hooks/useIsPaused';
-import { useValidator } from '@/hooks/useValidator';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import type { Player, Milestone } from '@/types';
+"use client";
 
-const ADMIN = process.env.NEXT_PUBLIC_ADMIN_ADDRESS ?? '';
+import { useState, FormEvent } from "react";
+import { useWallet } from "@/hooks/useWallet";
+import { buildRevokeMilestone } from "@/lib/contract";
+import { parseContractError } from "@/lib/contractErrorMessage";
+import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
-function formatDate(unix: number) {
-  return new Date(unix * 1000).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-interface Props {
-  player: Player;
+interface RevokeFormProps {
   onSuccess: () => void;
 }
 
-export default function RevokeForm({ player, onSuccess }: Props) {
-  const { publicKey } = useWallet();
-  const { isValidator, checking, revokeMilestone, loading, error } =
-    useValidator();
+export default function RevokeForm({ onSuccess }: RevokeFormProps) {
+  const { publicKey, signAndSubmit } = useWallet();
+  const [playerId, setPlayerId] = useState("");
+  const [milestoneId, setMilestoneId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{
+    playerId?: string;
+    milestoneId?: string;
+  }>({});
 
-  const [selected, setSelected] = useState<Milestone | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [txError, setTxError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const errorSummaryRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (txError || error) {
-      errorSummaryRef.current?.focus();
+  const validate = () => {
+    const errors: { playerId?: string; milestoneId?: string } = {};
+    if (!playerId.trim()) {
+      errors.playerId = "Player ID is required";
     }
-  }, [txError, error]);
+    if (!milestoneId.trim()) {
+      errors.milestoneId = "Milestone ID is required";
+    }
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
-  const isAdmin = !!publicKey && publicKey === ADMIN;
-  const paused = useIsPaused();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
 
-  function canRevoke(m: Milestone) {
-    if (!publicKey) return false;
-    return isAdmin || (isValidator && publicKey === m.validator);
-  }
+    if (!validate()) return;
+    if (!publicKey) {
+      setError("Wallet not connected");
+      return;
+    }
 
-  const walletAuthorized = !!publicKey && (isAdmin || isValidator);
+    setShowConfirm(true);
+  };
 
-  async function handleConfirm() {
-    if (!selected) return;
-    setTxError(null);
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      await revokeMilestone(player.id, selected.id);
-      setConfirmOpen(false);
-      setSelected(null);
-      setSuccess(true);
+      const xdr = await buildRevokeMilestone(publicKey, playerId, milestoneId);
+      await signAndSubmit(xdr);
       onSuccess();
-    } catch (e: any) {
-      setTxError(e.message ?? 'Transaction failed');
-      setConfirmOpen(false);
+      setPlayerId("");
+      setMilestoneId("");
+    } catch (err) {
+      setError(parseContractError(err));
+    } finally {
+      setIsLoading(false);
+      setShowConfirm(false);
     }
-  }
-
-  if (checking) {
-    return <p className="text-sm text-gray-400">Checking authorization…</p>;
-  }
-
-  if (player.milestones.length === 0) {
-    return <p className="text-sm text-gray-500">No milestones to revoke.</p>;
-  }
+  };
 
   return (
-    <div className="flex flex-col gap-5">
-      {paused && (
-        <div className="rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300">
-          <strong>Transactions are currently disabled.</strong>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Player ID
+          </label>
+          <input
+            type="text"
+            value={playerId}
+            onChange={(e) => setPlayerId(e.target.value)}
+            className={`input ${validationErrors.playerId ? "border-red-500" : ""}`}
+            placeholder="Enter player ID"
+          />
+          {validationErrors.playerId && (
+            <p className="text-sm text-red-500 mt-1">{validationErrors.playerId}</p>
+          )}
         </div>
       )}
       {/* Warning banner */}
-      <div
-        className="flex items-start gap-2 rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300"
-      >
+      <div className="flex items-start gap-2 rounded-lg border border-yellow-700 bg-yellow-950 px-4 py-3 text-sm text-yellow-300">
         <span aria-hidden>⚠️</span>
         <span>
           Revoking a milestone may reduce the player&apos;s progress level.
         </span>
       </div>
 
-      {/* Error summary */}
-      {(error || txError) && (
-        <div
-          ref={errorSummaryRef}
-          id="revoke-error-summary"
-          role="alert"
-          aria-label="Revocation error"
-          tabIndex={-1}
-          className="rounded-md border border-red-500 bg-red-950/30 p-3 outline-none"
-        >
-          <p className="text-sm text-red-400">{txError ?? error}</p>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Milestone ID
+          </label>
+          <input
+            type="text"
+            value={milestoneId}
+            onChange={(e) => setMilestoneId(e.target.value)}
+            className={`input ${validationErrors.milestoneId ? "border-red-500" : ""}`}
+            placeholder="Enter milestone ID"
+          />
+          {validationErrors.milestoneId && (
+            <p className="text-sm text-red-500 mt-1">{validationErrors.milestoneId}</p>
+          )}
         </div>
-      )}
 
-      {/* Milestone list */}
-      <fieldset disabled={!walletAuthorized || loading || paused}>
-        <legend className="sr-only">Select a milestone to revoke</legend>
-        <ul className="flex flex-col gap-3">
-          {player.milestones.map((m) => {
-            const authorized = canRevoke(m);
-            const isSelected = selected?.id === m.id;
-            return (
-              <li key={m.id}>
-                <button
-                  type="button"
-                  disabled={!authorized || loading}
-                  onClick={() => setSelected(isSelected ? null : m)}
-                  aria-pressed={isSelected}
-                  className={[
-                    'w-full text-left rounded-xl border px-4 py-3 transition',
-                    isSelected
-                      ? 'border-red-500 bg-red-950'
-                      : authorized
-                        ? 'border-gray-700 bg-brand-card hover:border-gray-500'
-                        : 'border-gray-800 bg-gray-900 opacity-50 cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  <p className="font-medium text-white text-sm">
-                    {m.description}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Approved by{' '}
-                    <span className="font-mono" title={m.validator}>
-                      {m.validator.slice(0, 6)}…{m.validator.slice(-4)}
-                    </span>{' '}
-                    · {formatDate(m.timestamp)}
-                  </p>
-                  {!authorized && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      Not authorized to revoke this milestone
-                    </p>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </fieldset>
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
       {/* Disabled notice */}
       {!walletAuthorized && (
@@ -167,27 +130,22 @@ export default function RevokeForm({ player, onSuccess }: Props) {
         type="button"
         disabled={!selected || !walletAuthorized || loading || paused}
         onClick={() => setConfirmOpen(true)}
-        aria-describedby={(error || txError) ? 'revoke-error-summary' : undefined}
+        aria-describedby={error || txError ? 'revoke-error-summary' : undefined}
         title={paused ? 'Contract is currently paused' : undefined}
         className="self-start rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? 'Revoking…' : 'Revoke Selected Milestone'}
       </button>
 
-      {/* Confirmation dialog */}
       <ConfirmDialog
-        isOpen={confirmOpen}
-        onCancel={() => setConfirmOpen(false)}
+        isOpen={showConfirm}
         onConfirm={handleConfirm}
+        onCancel={() => setShowConfirm(false)}
         title="Revoke Milestone"
-        message={
-          selected
-            ? `Are you sure you want to revoke "${selected.description}"? This may reduce the player's progress level and cannot be undone.`
-            : ''
-        }
-        confirmLabel="Yes, Revoke"
-        loading={loading}
+        message="Are you sure you want to revoke this milestone? This action cannot be undone."
+        confirmLabel="Revoke"
+        cancelLabel="Cancel"
       />
-    </div>
+    </>
   );
 }

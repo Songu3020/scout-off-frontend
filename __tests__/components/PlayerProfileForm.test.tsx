@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PlayerProfileForm from '@/components/player/PlayerProfileForm';
 import { useWallet } from '@/hooks/useWallet';
@@ -78,7 +84,9 @@ function setupWallet(overrides: Partial<ReturnType<typeof useWallet>> = {}) {
   } as any);
 }
 
-function setupIPFSUpload(overrides: Partial<ReturnType<typeof useIPFSUpload>> = {}) {
+function setupIPFSUpload(
+  overrides: Partial<ReturnType<typeof useIPFSUpload>> = {},
+) {
   mockedUseIPFSUpload.mockReturnValue({
     upload: jest.fn().mockResolvedValue('QmTestCID1234567890'),
     progress: 0,
@@ -176,7 +184,9 @@ describe('PlayerProfileForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /upload video/i }));
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: /register as player/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /register as player/i }),
+    );
 
     await waitFor(() => {
       expect(
@@ -208,7 +218,9 @@ describe('PlayerProfileForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /register as player/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /register as player/i }),
+      );
     });
 
     expect(onSuccess).toHaveBeenCalledWith('player-123');
@@ -226,7 +238,9 @@ describe('PlayerProfileForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /register as player/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /register as player/i }),
+      );
     });
 
     await waitFor(() => {

@@ -61,7 +61,11 @@ function PlayerDashboardContent() {
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
       <h1 className="text-3xl font-bold text-white">{t('title')}</h1>
 
-      <div role="tablist" aria-label={t('title')} className="flex border-b border-gray-800">
+      <div
+        role="tablist"
+        aria-label={t('title')}
+        className="flex border-b border-gray-800"
+      >
         {TABS.map((tab) => {
           const isDisabled = !isRegistered && tab.id === 'profile';
           return (

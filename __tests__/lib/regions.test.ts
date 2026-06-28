@@ -1,6 +1,13 @@
 import { AFRICAN_REGIONS } from '@/lib/regions';
 
-const KEY_LABELS = ['Nigeria', 'Kenya', 'Ghana', 'South Africa', 'Egypt', 'Senegal'];
+const KEY_LABELS = [
+  'Nigeria',
+  'Kenya',
+  'Ghana',
+  'South Africa',
+  'Egypt',
+  'Senegal',
+];
 
 describe('AFRICAN_REGIONS', () => {
   test('is non-empty', () => {

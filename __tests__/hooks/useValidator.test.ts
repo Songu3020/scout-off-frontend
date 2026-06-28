@@ -29,9 +29,7 @@ const PLAYER_ID = 'player-1';
 beforeEach(() => {
   jest.resetAllMocks();
   invalidateValidatorCache();
-  mockGetValidators.mockResolvedValue([
-    { address: VALIDATOR_KEY, addedAt: 0 },
-  ]);
+  mockGetValidators.mockResolvedValue([{ address: VALIDATOR_KEY, addedAt: 0 }]);
 });
 
 describe('useValidator — approve_milestone', () => {

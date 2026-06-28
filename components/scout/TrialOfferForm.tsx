@@ -1,7 +1,9 @@
 'use client';
 import { useState, FormEvent, useCallback } from 'react';
 import { useTrialOffer } from '@/hooks/useTrialOffer';
-import TransactionStatus, { type TxStatus } from '@/components/ui/TransactionStatus';
+import TransactionStatus, {
+  type TxStatus,
+} from '@/components/ui/TransactionStatus';
 import Button from '@/components/ui/Button';
 import type { TrialOfferType } from '@/types';
 
@@ -16,7 +18,10 @@ interface TrialOfferFormProps {
   onSuccess?: () => void;
 }
 
-export default function TrialOfferForm({ playerId, onSuccess }: TrialOfferFormProps) {
+export default function TrialOfferForm({
+  playerId,
+  onSuccess,
+}: TrialOfferFormProps) {
   const { logTrialOffer, loading, error, txHash } = useTrialOffer();
 
   const [clubName, setClubName] = useState('');
@@ -35,7 +40,7 @@ export default function TrialOfferForm({ playerId, onSuccess }: TrialOfferFormPr
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    
+
     setTxStatus('pending');
     try {
       await logTrialOffer(playerId, {
@@ -65,10 +70,7 @@ export default function TrialOfferForm({ playerId, onSuccess }: TrialOfferFormPr
     >
       {/* Club name */}
       <div className="flex flex-col gap-1">
-        <label
-          htmlFor="tof-club"
-          className="text-sm font-medium text-gray-300"
-        >
+        <label htmlFor="tof-club" className="text-sm font-medium text-gray-300">
           Club Name *
         </label>
         <input
@@ -93,10 +95,7 @@ export default function TrialOfferForm({ playerId, onSuccess }: TrialOfferFormPr
 
       {/* Offer type */}
       <div className="flex flex-col gap-1">
-        <label
-          htmlFor="tof-type"
-          className="text-sm font-medium text-gray-300"
-        >
+        <label htmlFor="tof-type" className="text-sm font-medium text-gray-300">
           Offer Type *
         </label>
         <select
@@ -120,8 +119,7 @@ export default function TrialOfferForm({ playerId, onSuccess }: TrialOfferFormPr
           htmlFor="tof-message"
           className="text-sm font-medium text-gray-300"
         >
-          Message{' '}
-          <span className="text-gray-500 font-normal">(optional)</span>
+          Message <span className="text-gray-500 font-normal">(optional)</span>
         </label>
         <textarea
           id="tof-message"
