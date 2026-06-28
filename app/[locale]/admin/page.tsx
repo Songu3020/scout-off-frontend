@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import EmptyState from '@/components/ui/EmptyState';
 import TransactionStatus from '@/components/ui/TransactionStatus';
+import AdminDashboardSkeleton from '@/components/admin/AdminDashboardSkeleton';
 import type { TxStatus } from '@/components/ui/TransactionStatus';
 import {
   getValidators,
@@ -50,6 +51,7 @@ function AdminDashboardContent() {
   const [fees, setFees] = useState<number | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   const [validatorInput, setValidatorInput] = useState('');
@@ -85,15 +87,17 @@ function AdminDashboardContent() {
 
   useEffect(() => {
     if (publicKey !== ADMIN_ADDRESS) return;
+    setFetchError(false);
     Promise.all([getValidators(), getPlatformFees(), getContractPaused()])
       .then(([v, f, p]) => {
         setValidators(v);
         setFees(f as number);
         setPaused(p as boolean);
       })
-      .catch(() =>
-        show({ message: 'Failed to load admin data.', variant: 'error' }),
-      )
+      .catch(() => {
+        setFetchError(true);
+        show({ message: 'Failed to load admin data.', variant: 'error' });
+      })
       .finally(() => setLoading(false));
   }, [publicKey, show]);
 
@@ -164,8 +168,35 @@ function AdminDashboardContent() {
   }
 
   if (!publicKey || publicKey !== ADMIN_ADDRESS) return null;
-  if (loading)
-    return <p className="text-center text-gray-400 mt-20">Loading…</p>;
+  if (loading) return <AdminDashboardSkeleton />;
+  if (fetchError)
+    return (
+      <div className="max-w-3xl mx-auto mt-20 flex flex-col items-center gap-4 text-center">
+        <p className="text-gray-400">
+          Failed to load admin data. Please check your connection and try again.
+        </p>
+        <button
+          onClick={() => {
+            setLoading(true);
+            setFetchError(false);
+            Promise.all([getValidators(), getPlatformFees(), getContractPaused()])
+              .then(([v, f, p]) => {
+                setValidators(v);
+                setFees(f as number);
+                setPaused(p as boolean);
+              })
+              .catch(() => {
+                setFetchError(true);
+                show({ message: 'Failed to load admin data.', variant: 'error' });
+              })
+              .finally(() => setLoading(false));
+          }}
+          className="px-5 py-2 rounded-lg bg-brand-green text-black font-semibold hover:opacity-90 transition"
+        >
+          Retry
+        </button>
+      </div>
+    );
 
   const activityTotalPages = Math.ceil(activityTotal / ACTIVITY_PAGE_SIZE);
 
