@@ -76,7 +76,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-export default function WalletButton() {
+export default function WalletButton({ hideBalance = false }: { hideBalance?: boolean }) {
   const t = useTranslations('wallet');
   const { show: showToast } = useToast();
   const {
