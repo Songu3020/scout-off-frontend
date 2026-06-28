@@ -11,6 +11,7 @@ import { PLATFORM_CONTACT_FEE_XLM } from '@/lib/contract';
 import ProgressBar from '@/components/ProgressBar';
 import PlayerProfileSkeleton from '@/components/PlayerProfileSkeleton';
 import PlayerStatsCard from '@/components/player/PlayerStatsCard';
+import IPFSMediaGallery from '@/components/player/IPFSMediaGallery';
 import TrialOfferForm from '@/components/scout/TrialOfferForm';
 import Button from '@/components/ui/Button';
 import QRModal from '@/components/ui/QRModal';
@@ -34,6 +35,13 @@ export default function PlayerProfile() {
   const milestones = player?.milestones ?? [];
   const profileUrl = typeof window !== 'undefined' ? window.location.href : '';
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
+
+  const profileUrl =
+    typeof window !== 'undefined' ? window.location.href : '';
+
   async function handleConfirm() {
     await unlock(id);
     setConfirmOpen(false);
@@ -44,7 +52,7 @@ export default function PlayerProfile() {
       playerId: player!.id,
       wallet: player!.wallet,
       progressLevel: player!.progressLevel,
-      milestones: milestones.map((m) => ({
+      milestones: player!.milestones.map((m) => ({
         id: m.id,
         description: m.description,
         validator: m.validator,
@@ -86,14 +94,7 @@ export default function PlayerProfile() {
       {/* Header */}
       <div className="bg-brand-card border border-gray-800 rounded-xl p-6 flex gap-6 items-start">
         <div className="w-20 h-20 rounded-full bg-gray-700 overflow-hidden shrink-0">
-          {player.ipfsHash && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? 'https://gateway.pinata.cloud/ipfs'}/${player.ipfsHash}`}
-              alt={player.vitals.name}
-              className="w-full h-full object-cover"
-            />
-          )}
+          <IPFSMediaGallery cids={player.ipfsHash ? [player.ipfsHash] : []} />
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-white">
@@ -140,7 +141,7 @@ export default function PlayerProfile() {
       </div>
 
       {/* Download milestones */}
-      {milestones.length > 0 && (
+      {player.milestones.length > 0 && (
         <button
           onClick={handleDownload}
           className="self-start text-sm text-brand-green underline underline-offset-2 hover:opacity-80 transition"
