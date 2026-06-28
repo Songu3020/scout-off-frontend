@@ -9,8 +9,11 @@ import { PLATFORM_CONTACT_FEE_XLM } from '@/lib/contract';
 import ProgressBar from '@/components/ProgressBar';
 import PlayerProfileSkeleton from '@/components/PlayerProfileSkeleton';
 import PlayerStatsCard from '@/components/player/PlayerStatsCard';
+import IPFSMediaGallery from '@/components/player/IPFSMediaGallery';
 import TrialOfferForm from '@/components/scout/TrialOfferForm';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import QRModal from '@/components/ui/QRModal';
 
 export default function PlayerProfile() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +21,13 @@ export default function PlayerProfile() {
   const { player, loading: playerLoading, refetch } = usePlayer(id ?? null);
   const { unlock, loading: contacting } = usePayToContact();
   const { subscription, isExpired, loading: subscriptionLoading } = useSubscription();
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
+
+  const profileUrl =
+    typeof window !== 'undefined' ? window.location.href : '';
 
   async function handleConfirm() {
     await unlock(id);
@@ -29,7 +39,7 @@ export default function PlayerProfile() {
       playerId: player!.id,
       wallet: player!.wallet,
       progressLevel: player!.progressLevel,
-      milestones: milestones.map((m) => ({
+      milestones: player!.milestones.map((m) => ({
         id: m.id,
         description: m.description,
         validator: m.validator,
@@ -49,7 +59,8 @@ export default function PlayerProfile() {
   }
 
   const isScoutWithActiveSubscription = publicKey && subscription && !isExpired;
-  const canLogTrialOffer = isScoutWithActiveSubscription && player && player.progressLevel < 3;
+  const canLogTrialOffer =
+    isScoutWithActiveSubscription && player && player.progressLevel < 3;
 
   if (playerLoading) {
     return <PlayerProfileSkeleton showContactButton={!!publicKey} />;
@@ -62,14 +73,7 @@ export default function PlayerProfile() {
       {/* Header */}
       <div className="bg-brand-card border border-gray-800 rounded-xl p-6 flex gap-6 items-start">
         <div className="w-20 h-20 rounded-full bg-gray-700 overflow-hidden shrink-0">
-          {player.ipfsHash && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? 'https://gateway.pinata.cloud/ipfs'}/${player.ipfsHash}`}
-              alt={player.vitals.name}
-              className="w-full h-full object-cover"
-            />
-          )}
+          <IPFSMediaGallery cids={player.ipfsHash ? [player.ipfsHash] : []} />
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-white">
@@ -112,7 +116,7 @@ export default function PlayerProfile() {
       </div>
 
       {/* Download milestones */}
-      {milestones.length > 0 && (
+      {player.milestones.length > 0 && (
         <button
           onClick={handleDownload}
           className="self-start text-sm text-brand-green underline underline-offset-2 hover:opacity-80 transition"
@@ -140,23 +144,15 @@ export default function PlayerProfile() {
 
       {/* Pay to contact */}
       {publicKey && (
-        <button
-          onClick={handleDownload}
-          className="self-start text-sm text-brand-green underline underline-offset-2 hover:opacity-80 transition"
-        >
-          Download Milestones
-        </button>
-      )}
-
-      {/* Pay to contact */}
-      {publicKey && (
         <>
           <button
             onClick={() => setConfirmOpen(true)}
             disabled={contacting}
             className="bg-brand-green text-black font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
-            {contacting ? 'Processing…' : `Pay to Contact (${PLATFORM_CONTACT_FEE_XLM} XLM)`}
+            {contacting
+              ? 'Processing…'
+              : `Pay to Contact (${PLATFORM_CONTACT_FEE_XLM} XLM)`}
           </button>
           <ConfirmDialog
             isOpen={confirmOpen}
@@ -193,7 +189,8 @@ export default function PlayerProfile() {
           ) : !subscriptionLoading && isExpired ? (
             <div className="bg-brand-card border border-gray-700 rounded-xl p-6">
               <p className="text-sm text-gray-400">
-                Your subscription has expired. Renew your subscription to log trial offers.
+                Your subscription has expired. Renew your subscription to log
+                trial offers.
               </p>
             </div>
           ) : null}
