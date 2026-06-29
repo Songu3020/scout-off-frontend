@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { useTranslations } from 'next-intl';
+import { useWalletContext as useWallet } from '@/context/WalletContext';
 import {
   getSubscription,
   subscribe as contractSubscribe,
@@ -9,7 +10,8 @@ import { parseContractError } from '@/lib/contractErrorMessage';
 import type { Subscription, SubscriptionTier } from '@/types';
 
 export function useSubscription() {
-  const { publicKey, signAndSubmit } = useWallet();
+  const { publicKey, signAndSubmit, refreshBalance } = useWallet();
+  const t = useTranslations('contractErrors');
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function useSubscription() {
       setError(null);
       try {
         await contractSubscribe(publicKey, tier, signAndSubmit);
-        await fetchSubscription();
+        await Promise.all([fetchSubscription(), refreshBalance()]);
       } catch (e: any) {
         const msg = parseContractError(e);
         setError(msg);
@@ -52,7 +54,7 @@ export function useSubscription() {
         setLoading(false);
       }
     },
-    [publicKey, signAndSubmit, fetchSubscription],
+    [publicKey, signAndSubmit, fetchSubscription, refreshBalance],
   );
 
   const isExpired = subscription
