@@ -6,7 +6,7 @@ import {
   getSubscription,
   subscribe as contractSubscribe,
 } from '@/lib/contract';
-import { extractContractErrorKey } from '@/lib/contractErrorMessage';
+import { parseContractError } from '@/lib/contractErrorMessage';
 import type { Subscription, SubscriptionTier } from '@/types';
 
 export function useSubscription() {
@@ -27,8 +27,8 @@ export function useSubscription() {
       const data = await getSubscription(publicKey);
       setSubscription((data as Subscription) ?? null);
     } catch (e: any) {
-      const key = extractContractErrorKey(e.message ?? '');
-      setError(key ? t(key) : e.message);
+      const msg = parseContractError(e);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -47,8 +47,8 @@ export function useSubscription() {
         await contractSubscribe(publicKey, tier, signAndSubmit);
         await Promise.all([fetchSubscription(), refreshBalance()]);
       } catch (e: any) {
-        const key = extractContractErrorKey(e.message ?? '');
-        setError(key ? t(key) : e.message);
+        const msg = parseContractError(e);
+        setError(msg);
         throw e;
       } finally {
         setLoading(false);
