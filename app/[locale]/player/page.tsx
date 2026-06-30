@@ -1,5 +1,7 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
+import type React from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRequireWallet } from '@/hooks/useRequireWallet';
 import { usePlayer } from '@/hooks/usePlayer';
@@ -48,6 +50,11 @@ function PlayerDashboardContent() {
   const { walletAddress: publicKey } = useRequireWallet();
   const { player, loading, refetch, optimisticUpdate } = usePlayer(publicKey);
   const t = useTranslations('player_dashboard');
+  const router = useRouter();
+
+  const [successPlayerId, setSuccessPlayerId] = useState<string | null>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const [copyFeedback, setCopyFeedback] = useState<string>('');
 
   /** True while we're waiting for on-chain confirmation of a just-registered profile */
   const [isPendingConfirmation, setIsPendingConfirmation] = useState(false);
@@ -63,6 +70,40 @@ function PlayerDashboardContent() {
       setActiveTab(isRegistered ? 'profile' : 'register');
     }
   }, [loading, isRegistered]);
+
+  useEffect(() => {
+    if (!successPlayerId) return;
+
+    setRedirectCountdown(3);
+    const intervalId = window.setInterval(() => {
+      setRedirectCountdown((current) => current - 1);
+    }, 1000);
+    const timerId = window.setTimeout(() => {
+      router.push(`/player/${successPlayerId}`);
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.clearTimeout(timerId);
+    };
+  }, [router, successPlayerId]);
+
+  const handleCopyPlayerId = useCallback(async () => {
+    if (!successPlayerId) return;
+
+    try {
+      await navigator.clipboard.writeText(successPlayerId);
+      setCopyFeedback('Copied');
+      window.setTimeout(() => setCopyFeedback(''), 1500);
+    } catch {
+      setCopyFeedback('Unable to copy');
+    }
+  }, [successPlayerId]);
+
+  const handleViewProfile = useCallback(() => {
+    if (!successPlayerId) return;
+    router.push(`/player/${successPlayerId}`);
+  }, [router, successPlayerId]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -113,6 +154,8 @@ function PlayerDashboardContent() {
 
       // 1. Show optimistic data immediately
       optimisticUpdate(optimisticPlayer);
+      setSuccessPlayerId(playerId);
+      setCopyFeedback('');
       setIsPendingConfirmation(true);
       setActiveTab('profile');
 
@@ -120,6 +163,7 @@ function PlayerDashboardContent() {
       try {
         await refetch();
       } catch {
+        setSuccessPlayerId(null);
         // On error, discard the optimistic state so the user is not left with stale data
         refetch({ discardOptimistic: true });
         setActiveTab('register');
@@ -135,7 +179,7 @@ function PlayerDashboardContent() {
   }
 
   if (loading) {
-    return <p className="text-center text-gray-400 mt-20">Loading…</p>;
+    return <p className="text-center text-gray-400 mt-20">LoadingΓÇª</p>;
   }
 
   return (
@@ -209,7 +253,41 @@ function PlayerDashboardContent() {
                 className="flex items-center gap-2 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300"
               >
                 <InlineSpinner />
-                <span>Confirming on-chain… This may take a few seconds.</span>
+                <span>Confirming on-chainΓÇª This may take a few seconds.</span>
+              </div>
+            )}
+
+            {successPlayerId && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-100"
+              >
+                <div className="flex flex-col gap-3">
+                  <p className="font-semibold text-white">
+                    Registration complete! Redirecting to your profile in{' '}
+                    {redirectCountdown > 0 ? redirectCountdown : 0} seconds.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-gray-300">
+                      Player ID: <span className="font-mono text-white">{successPlayerId}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyPlayerId}
+                      className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/20"
+                    >
+                      {copyFeedback || 'Copy player ID'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleViewProfile}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white hover:bg-white/10"
+                    >
+                      View profile
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -229,7 +307,7 @@ function PlayerDashboardContent() {
                 )}
               </div>
               <p className="text-gray-400 text-sm">
-                {player.vitals.position} · {player.vitals.region}
+                {player.vitals.position} ┬╖ {player.vitals.region}
               </p>
               <ProgressBar level={player.progressLevel} />
             </div>
