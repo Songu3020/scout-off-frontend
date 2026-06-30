@@ -1,6 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
-import useSWR from 'swr';
+import useSWR, { mutate as globalMutate } from 'swr';
 import { filterPlayers } from '@/lib/contract';
 import type { Player, PlayerFilter } from '@/types';
 
@@ -9,11 +9,19 @@ import type { Player, PlayerFilter } from '@/types';
  *   "scout:search:{region}:{position}:{minLevel}"
  *
  * All filter dimensions are encoded in the key so different filter combos
- * get separate caches. SWR deduplicates concurrent requests for the same
- * key, preventing duplicate RPC calls.
+ * get separate cache entries. SWR deduplicates concurrent requests for the
+ * same key, preventing duplicate RPC calls within the deduplication window.
  */
-function scoutSearchKey(filter: PlayerFilter): string {
+export function scoutSearchKey(filter: PlayerFilter): string {
   return `scout:search:${filter.region ?? ''}:${filter.position ?? ''}:${filter.minLevel ?? 0}`;
+}
+
+/**
+ * Imperatively invalidate a specific scout search result.
+ * Call after a write operation that changes the player list (e.g. registration).
+ */
+export function invalidateScoutSearch(filter: PlayerFilter): Promise<void> {
+  return globalMutate(scoutSearchKey(filter)) as Promise<void>;
 }
 
 export function useScout() {
@@ -30,17 +38,15 @@ export function useScout() {
       return results as Player[];
     },
     {
-      dedupingInterval: 60_000, // 60-second stale time — no duplicate RPC calls within this window
+      dedupingInterval: 5_000,   // no duplicate RPC calls for the same filter within 5 s
       revalidateOnFocus: false,
       errorRetryCount: 2,
     },
   );
 
-  /** Trigger a search with the given filter. The returned loading/isValidating
-   *  state can be observed via the reactive `loading` property. */
+  /** Trigger a search with the given filter. */
   const search = useCallback((filter: PlayerFilter) => {
-    const key = scoutSearchKey(filter);
-    setSearchKey(key);
+    setSearchKey(scoutSearchKey(filter));
   }, []);
 
   return {
