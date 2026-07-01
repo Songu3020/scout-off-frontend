@@ -1,7 +1,7 @@
 'use client';
 
-import { Modal } from '@/components/ui/Modal';
-import { Spinner } from '@/components/ui/Spinner';
+import Modal from '@/components/ui/Modal';
+import Spinner from '@/components/ui/Spinner';
 import { usePayToContact } from '@/hooks/usePayToContact';
 
 interface ContactModalProps {
