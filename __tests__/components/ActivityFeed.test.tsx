@@ -73,7 +73,10 @@ describe('ActivityFeed', () => {
   });
 
   it('shows timestamps in a human-readable format', async () => {
-    const now = Date.now();
+    // Freeze the clock so the "Xs ago" label can't drift while the
+    // component fetches/renders under CI load.
+    const now = 1_700_000_000_000;
+    const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(now);
     const events = [
       {
         id: 'evt-1',
@@ -89,6 +92,8 @@ describe('ActivityFeed', () => {
     await waitFor(() => {
       expect(screen.getByText('10s ago')).toBeInTheDocument();
     });
+
+    dateNowSpy.mockRestore();
   });
 
   it('shows a loading skeleton while events are being fetched', async () => {
