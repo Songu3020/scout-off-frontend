@@ -46,11 +46,13 @@ export default function Navbar() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Return focus to hamburger button when menu closes
+  // Return focus to hamburger button when menu closes (not on initial mount)
+  const wasMenuOpen = useRef(false);
   useEffect(() => {
-    if (!menuOpen) {
+    if (wasMenuOpen.current && !menuOpen) {
       hamburgerRef.current?.focus();
     }
+    wasMenuOpen.current = menuOpen;
   }, [menuOpen]);
 
   // Trap focus inside mobile menu and close on Escape
@@ -148,7 +150,9 @@ export default function Navbar() {
               >
                 {locales.find((l) => l.code === currentLocale)?.label ||
                   t('language.select_language')}
-                <span className="text-xs" aria-hidden="true">▼</span>
+                <span className="text-xs" aria-hidden="true">
+                  ▼
+                </span>
               </button>
               {localeOpen && (
                 <div
@@ -180,7 +184,9 @@ export default function Navbar() {
             {isAuthenticated && (
               <span className="hidden md:inline text-sm text-gray-300 whitespace-nowrap">
                 {isLoadingBalance ? (
-                  <span className="text-gray-500" aria-hidden="true">⟳</span>
+                  <span className="text-gray-500" aria-hidden="true">
+                    ⟳
+                  </span>
                 ) : (
                   <span>{xlmBalance ?? '0.00'} XLM</span>
                 )}
@@ -197,7 +203,11 @@ export default function Navbar() {
             className="sm:hidden p-2 rounded text-gray-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-green"
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
-            aria-label={menuOpen ? t('common.close') + ' navigation menu' : 'Open navigation menu'}
+            aria-label={
+              menuOpen
+                ? t('common.close') + ' navigation menu'
+                : 'Open navigation menu'
+            }
             onClick={() => setMenuOpen((prev) => !prev)}
           >
             <svg

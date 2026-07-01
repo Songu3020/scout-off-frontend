@@ -146,10 +146,12 @@ describe('Navbar', () => {
 
   test('clicking copy button copies full address to clipboard', async () => {
     const publicKey = 'GABCDEF1234567890XYZ';
-    const writeText = jest.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: { writeText },
-    });
+    // userEvent.setup() installs its own navigator.clipboard stub, so spy on
+    // it afterwards rather than replacing navigator.clipboard beforehand.
+    const user = userEvent.setup({ delay: null });
+    const writeText = jest
+      .spyOn(navigator.clipboard, 'writeText')
+      .mockResolvedValue(undefined);
 
     mockUseWallet.mockReturnValue({
       publicKey,
@@ -162,7 +164,6 @@ describe('Navbar', () => {
 
     render(<Navbar />);
 
-    const user = userEvent.setup({ delay: null });
     const copyBtn = screen.getByRole('button', {
       name: /Copy wallet address/i,
     });
