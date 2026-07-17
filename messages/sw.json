@@ -82,7 +82,9 @@
     "address": "Anwani",
     "invalid_address": "TODO: Machine-translated - Anwani ya Stellar sio sahihi",
     "connection_failed": "TODO: Machine-translated - Kushindwa kuunganisha pochi",
-    "balanceError": "TODO: Machine-translated - Salio halipatikani — kosa la mtandao"
+    "balanceError": "TODO: Machine-translated - Salio halipatikani — kosa la mtandao",
+    "ledgerConnect": "TODO: Machine-translated - Pochi ya vifaa — unganisha kupitia USB",
+    "ledgerInstructions": "TODO: Machine-translated - Unganisha kifaa chako cha Ledger kupitia USB na ufungue programu ya Stellar."
   },
   "errors": {
     "not_found": "Haijafikiwa",

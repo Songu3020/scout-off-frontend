@@ -17,6 +17,10 @@ jest.mock('@/lib/walletAdapters', () => ({
       getPublicKey: jest.fn(),
       signTransaction: jest.fn(),
     },
+    ledger: {
+      getPublicKey: jest.fn(),
+      signTransaction: jest.fn(),
+    },
   },
 }));
 
@@ -62,6 +66,9 @@ describe('WalletContext', () => {
   const lobstr = walletAdapters.lobstr as jest.Mocked<
     typeof walletAdapters.lobstr
   >;
+  const ledger = walletAdapters.ledger as jest.Mocked<
+    typeof walletAdapters.ledger
+  >;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -72,6 +79,8 @@ describe('WalletContext', () => {
     albedo.signTransaction.mockResolvedValue(SIGNED_XDR);
     lobstr.getPublicKey.mockResolvedValue(PUBLIC_KEY);
     lobstr.signTransaction.mockResolvedValue(SIGNED_XDR);
+    ledger.getPublicKey.mockResolvedValue(PUBLIC_KEY);
+    ledger.signTransaction.mockResolvedValue(SIGNED_XDR);
 
     const { rpc } = jest.requireMock('@/lib/stellar');
     rpc.getAccount.mockResolvedValue({
@@ -112,6 +121,16 @@ describe('WalletContext', () => {
         await result.current.connectWithProvider('lobstr');
       });
       expect(lobstr.getPublicKey).toHaveBeenCalled();
+      expect(result.current.isAuthenticated).toBe(true);
+    });
+
+    it('calls ledger adapter for ledger provider', async () => {
+      setupSep10();
+      const { result } = renderHook(() => useWalletContext(), { wrapper });
+      await act(async () => {
+        await result.current.connectWithProvider('ledger');
+      });
+      expect(ledger.getPublicKey).toHaveBeenCalled();
       expect(result.current.isAuthenticated).toBe(true);
     });
 
