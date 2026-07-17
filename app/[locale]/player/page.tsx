@@ -11,6 +11,7 @@ import UpdateProfileForm from '@/components/player/UpdateProfileForm';
 import MilestoneTimeline from '@/components/player/MilestoneTimeline';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import type { Player, PlayerVitals } from '@/types';
+import PullToRefresh from '@/components/ui/PullToRefresh';
 
 type TabId = 'register' | 'profile';
 
@@ -48,7 +49,7 @@ function InlineSpinner() {
 
 function PlayerDashboardContent() {
   const { walletAddress: publicKey } = useRequireWallet();
-  const { player, loading, refetch, optimisticUpdate } = usePlayer(publicKey);
+  const { player, loading, isValidating, refetch, optimisticUpdate } = usePlayer(publicKey);
   const t = useTranslations('player_dashboard');
   const router = useRouter();
 
@@ -183,7 +184,8 @@ function PlayerDashboardContent() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-8">
+    <PullToRefresh onRefresh={refetch} isLoading={isValidating}>
+      <div className="max-w-2xl mx-auto flex flex-col gap-8">
       <h1 className="text-3xl font-bold text-white">{t('title')}</h1>
 
       <div
@@ -334,6 +336,7 @@ function PlayerDashboardContent() {
         ) : null}
       </div>
     </div>
+    </PullToRefresh>
   );
 }
 

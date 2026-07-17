@@ -15,6 +15,7 @@ import PlayerFilterForm from '@/components/scout/PlayerFilterForm';
 import EmptyState from '@/components/ui/EmptyState';
 import Spinner from '@/components/ui/Spinner';
 import type { Player, PlayerFilter } from '@/types';
+import PullToRefresh from '@/components/ui/PullToRefresh';
 
 const PAGE_SIZE = 12;
 
@@ -29,7 +30,7 @@ export default function ScoutDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { players, loading, search, searchByName } = useScout();
+  const { players, loading, search, searchByName, refetch } = useScout();
   const { subscription } = useSubscription();
   const [now, setNow] = useState(() => Date.now());
 
@@ -143,7 +144,8 @@ export default function ScoutDashboardContent() {
   const showEmptyState = searchHasCompleted && !loading && players.length === 0;
 
   return (
-    <div className="flex flex-col gap-8">
+    <PullToRefresh onRefresh={refetch} isLoading={loading}>
+      <div className="flex flex-col gap-8">
       <h1 className="text-3xl font-bold text-white">Scout Dashboard</h1>
 
       {subscription &&
@@ -369,5 +371,6 @@ export default function ScoutDashboardContent() {
         </>
       )}
     </div>
+    </PullToRefresh>
   );
 }
