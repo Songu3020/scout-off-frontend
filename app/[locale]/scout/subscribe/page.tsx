@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import TransactionStatus from '@/components/ui/TransactionStatus';
 import type { TxStatus } from '@/components/ui/TransactionStatus';
 import useIsPaused from '@/hooks/useIsPaused';
 import { useSubscription } from '@/hooks/useSubscription';
+import { redeemReferralCode } from '@/lib/api';
 import type { SubscriptionTier } from '@/types';
 
 const TIERS: Array<{
@@ -65,6 +66,7 @@ function remainingDays(expiresAt: number): number {
 
 function SubscribeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isPaused = useIsPaused();
   const { subscription, isExpired, subscribe, loading, error } =
     useSubscription();
@@ -75,6 +77,7 @@ function SubscribeContent() {
     null,
   );
   const redirectTimer = useRef<number | null>(null);
+  const referralCode = searchParams.get('ref');
 
   useEffect(() => {
     return () => {
@@ -134,6 +137,9 @@ function SubscribeContent() {
 
     try {
       await subscribe(tier);
+      if (referralCode) {
+        redeemReferralCode(referralCode).catch(() => {});
+      }
       const plan = TIERS.find((p) => p.tier === tier);
       // price is like "5 XLM" — strip the " XLM" suffix for feePaid
       setFeePaid(plan ? plan.price.replace(' XLM', '') : undefined);
@@ -175,6 +181,13 @@ function SubscribeContent() {
           <span className="text-sm text-emerald-400 font-medium">
             {remainingDays(subscription.expiresAt)} days remaining
           </span>
+        </div>
+      )}
+
+      {referralCode && (
+        <div className="rounded-xl border border-brand-green/40 bg-brand-green/10 px-5 py-3 text-sm text-brand-green">
+          You were referred by a colleague! Your referral will be credited
+          automatically when you subscribe.
         </div>
       )}
 
