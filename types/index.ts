@@ -118,6 +118,20 @@ export interface TrialOfferDetails {
   message?: string;
 }
 
+// ── Referral / Invite ─────────────────────────────────────────────────────────
+export interface ReferralCode {
+  code: string;
+  scoutWallet: string;
+  createdAt: number;
+  usedBy: string | null;
+  usedAt: number | null;
+}
+
+export interface ReferralStats {
+  totalCodes: number;
+  successfulReferrals: number;
+}
+
 // ── Contract call helpers ─────────────────────────────────────────────────────
 export interface ContractCallResult<T = unknown> {
   success: boolean;
