@@ -86,4 +86,28 @@ export const fetchValidatorMilestoneCount = async (
   }
 };
 
+// Referrals
+import type { ReferralCode, ReferralStats } from '@/types';
+
+export const generateReferralCode = async (): Promise<ReferralCode> => {
+  const res = await fetch('/api/referrals/generate', { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to generate referral code');
+  return res.json();
+};
+
+export const getReferralStats = async (): Promise<ReferralStats> => {
+  const res = await fetch('/api/referrals/count');
+  if (!res.ok) throw new Error('Failed to fetch referral stats');
+  return res.json();
+};
+
+export const redeemReferralCode = async (code: string): Promise<boolean> => {
+  const res = await fetch('/api/referrals/redeem', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  return res.ok;
+};
+
 export default api;

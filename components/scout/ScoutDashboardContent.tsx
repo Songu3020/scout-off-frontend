@@ -14,6 +14,7 @@ import PlayerCardSkeleton from '@/components/PlayerCardSkeleton';
 import PlayerFilterForm from '@/components/scout/PlayerFilterForm';
 import EmptyState from '@/components/ui/EmptyState';
 import Spinner from '@/components/ui/Spinner';
+import ReferralPanel from '@/components/scout/ReferralPanel';
 import type { Player, PlayerFilter } from '@/types';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 
@@ -194,6 +195,8 @@ export default function ScoutDashboardContent() {
             </div>
           );
         })()}
+
+      <ReferralPanel />
 
       <div className="bg-brand-card border border-gray-800 rounded-xl p-5 flex flex-col gap-3">
         <label
