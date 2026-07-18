@@ -1,4 +1,5 @@
 const createNextIntlPlugin = require('next-intl/plugin');
+const { withSentryConfig } = require('@sentry/nextjs');
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
@@ -89,24 +90,6 @@ const nextConfig = {
       },
     ],
   },
-  webpack(config, { isServer }) {
-    // @sentry/nextjs is an optional peer dep used only in production.
-    // Mark it as external so webpack doesn't try to bundle it when the
-    // package isn't installed locally (e.g. CI / contributor machines).
-    config.externals = [
-      ...(Array.isArray(config.externals)
-        ? config.externals
-        : config.externals
-          ? [config.externals]
-          : []),
-      ({ request }, callback) => {
-        if (request === '@sentry/nextjs')
-          return callback(null, 'commonjs @sentry/nextjs');
-        callback();
-      },
-    ];
-    return config;
-  },
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
 
@@ -185,4 +168,25 @@ const nextConfig = {
   },
 };
 
-module.exports = withNextIntl(withPWA(nextConfig));
+// @sentry/nextjs's build-time plugin uploads source maps and tags the
+// release for every build. It no-ops (with a warning) when SENTRY_AUTH_TOKEN
+// isn't set, so local/contributor builds are unaffected.
+const sentryBuildOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  release: {
+    // Falls back to the plugin's own git-HEAD auto-detection when unset.
+    name: process.env.SENTRY_RELEASE,
+  },
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+};
+
+module.exports = withSentryConfig(
+  withNextIntl(withPWA(nextConfig)),
+  sentryBuildOptions,
+);
