@@ -65,5 +65,6 @@ export function useScout() {
     error: error?.message ?? null,
     search,
     searchByName,
+    refetch: () => mutate(),
   };
 }

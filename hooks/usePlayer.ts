@@ -58,15 +58,16 @@ export function usePlayer(walletOrId: string | null) {
    */
   const refetch = (options?: { discardOptimistic?: boolean }) => {
     if (options?.discardOptimistic) {
-      mutate(undefined, { revalidate: true });
+      return mutate(undefined, { revalidate: true });
     } else {
-      mutate();
+      return mutate();
     }
   };
 
   return {
     player: player ?? null,
     loading: isValidating && !player,
+    isValidating,
     error: error?.message ?? null,
     refetch,
     optimisticUpdate,
