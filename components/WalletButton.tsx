@@ -259,10 +259,17 @@ export default function WalletButton({
                     <div className="flex-1 min-w-0">
                       <p className="font-medium">{wp.label}</p>
                       <p className="text-xs text-gray-500">
-                        {wp.provider === 'albedo'
-                          ? t('installMobile')
-                          : t('install')}
+                        {wp.provider === 'ledger'
+                          ? t('ledgerConnect')
+                          : wp.provider === 'albedo'
+                            ? t('installMobile')
+                            : t('install')}
                       </p>
+                      {wp.provider === 'ledger' && (
+                        <p className="text-xs text-yellow-400 mt-1">
+                          {t('ledgerInstructions')}
+                        </p>
+                      )}
                     </div>
                     {isThisConnecting && (
                       <span className="flex items-center gap-2 text-sm text-brand-green shrink-0">

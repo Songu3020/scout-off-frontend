@@ -29,6 +29,7 @@ export const WALLET_PROVIDERS: WalletProviderInfo[] = [
   { provider: 'freighter', label: 'Freighter', icon: '🔶' },
   { provider: 'albedo', label: 'Albedo', icon: '✨' },
   { provider: 'lobstr', label: 'LOBSTR', icon: '🌐' },
+  { provider: 'ledger', label: 'Ledger', icon: '💎' },
 ];
 
 /** Official install page for each wallet provider, used by the "Install" prompt. */
@@ -36,12 +37,23 @@ export const WALLET_INSTALL_URLS: Record<WalletProvider, string> = {
   freighter: 'https://freighter.app',
   albedo: 'https://albedo.link',
   lobstr: 'https://lobstr.co',
+  ledger: 'https://www.ledger.com/stellar-wallet',
 };
 
-/** Checks whether a given wallet provider's extension/app is installed. */
+/** Checks whether a given wallet provider's extension/app is installed/available. */
 export async function isWalletInstalled(
   provider: WalletProvider,
 ): Promise<boolean> {
+  if (provider === 'ledger') {
+    try {
+      const { default: TransportWebHID } = await import(
+        '@ledgerhq/hw-transport-webhid'
+      );
+      return TransportWebHID.isSupported();
+    } catch {
+      return false;
+    }
+  }
   try {
     await walletAdapters[provider].getPublicKey();
     return true;

@@ -82,7 +82,9 @@
     "address": "Address",
     "invalid_address": "Invalid Stellar address",
     "connection_failed": "Failed to connect wallet",
-    "balanceError": "Balance unavailable — network error"
+    "balanceError": "Balance unavailable — network error",
+    "ledgerConnect": "Hardware wallet — connect via USB",
+    "ledgerInstructions": "Connect your Ledger device via USB and open the Stellar app."
   },
   "errors": {
     "not_found": "Not found",

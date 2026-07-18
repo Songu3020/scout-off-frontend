@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@albedo-link/intent": "^0.13.0",
+    "@ledgerhq/hw-app-str": "^7.7.6",
+    "@ledgerhq/hw-transport-webhid": "^6.36.0",
     "@lobstrco/signer-extension-api": "2.0.0",
     "@sentry/nextjs": "^10.59.0",
     "@stellar/freighter-api": "2.0.0",
